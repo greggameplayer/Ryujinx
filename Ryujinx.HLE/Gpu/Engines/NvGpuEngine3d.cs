@@ -132,9 +132,7 @@ namespace Ryujinx.HLE.Gpu.Engines
             int Width  = ReadRegister(NvGpuEngine3dReg.FrameBufferNWidth  + FbIndex * 0x10);
             int Height = ReadRegister(NvGpuEngine3dReg.FrameBufferNHeight + FbIndex * 0x10);
 
-            //Note: Using the Width/Height results seems to give incorrect results.
-            //Maybe the size of all frame buffers is hardcoded to screen size? This seems unlikely.
-            Gpu.Renderer.FrameBuffer.Create(Key, 1280, 720);
+            Gpu.Renderer.FrameBuffer.Create(Key, Width, Height);
             Gpu.Renderer.FrameBuffer.Bind(Key);
         }
 
