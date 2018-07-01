@@ -28,7 +28,7 @@ namespace Ryujinx.HLE.OsHle.Services.Aud
         }
 
         public long ListAudioOuts(ServiceCtx Context)
-        {   
+        {
             ListAudioOutsMethod(Context, Context.Request.ReceiveBuff[0].Position, Context.Request.ReceiveBuff[0].Size);
 
             return 0;
@@ -41,14 +41,14 @@ namespace Ryujinx.HLE.OsHle.Services.Aud
 
             return 0;
         }
-        
+
         public long ListAudioOutsAuto(ServiceCtx Context)
-        { 
+        {
             ListAudioOutsMethod(Context, Context.Request.GetBufferType0x22().Position, Context.Request.GetBufferType0x22().Size);
 
             return 0;
         }
-		
+
         public long OpenAudioOutAuto(ServiceCtx Context)
         {
             OpenAudioOutMethod(Context, Context.Request.GetBufferType0x21().Position, Context.Request.GetBufferType0x21().Size,
@@ -56,7 +56,7 @@ namespace Ryujinx.HLE.OsHle.Services.Aud
 
             return 0;
         }
-        
+
         public void ListAudioOutsMethod(ServiceCtx Context, long Position, long Size)
         {
             int NameCount = 0;
@@ -76,17 +76,17 @@ namespace Ryujinx.HLE.OsHle.Services.Aud
 
             Context.ResponseData.Write(NameCount);
         }
-        
+
         public void OpenAudioOutMethod(ServiceCtx Context, long SendPosition, long SendSize, long ReceivePosition, long ReceiveSize)
         {
             IAalOutput AudioOut = Context.Ns.AudioOut;
-                
+
             string DeviceName = AMemoryHelper.ReadAsciiString(
                 Context.Memory,
                 SendPosition,
                 SendSize
             );
-            
+
             if (DeviceName == string.Empty)
             {
                 DeviceName = DefaultAudioOutput;
@@ -101,7 +101,7 @@ namespace Ryujinx.HLE.OsHle.Services.Aud
             else
             {
                 Context.Ns.Log.PrintError(LogClass.ServiceAudio, $"Output buffer size {ReceiveSize} too small!");
-            }       
+            }
 
             int SampleRate = Context.RequestData.ReadInt32();
             int Channels   = Context.RequestData.ReadInt32();

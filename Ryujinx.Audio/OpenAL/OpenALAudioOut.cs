@@ -3,6 +3,7 @@ using OpenTK.Audio.OpenAL;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace Ryujinx.Audio.OpenAL
@@ -20,7 +21,7 @@ namespace Ryujinx.Audio.OpenAL
             public int SourceId { get; private set; }
 
             public int SampleRate { get; private set; }
-            
+
             public ALFormat Format { get; private set; }
 
             private ReleaseCallback Callback;
@@ -153,7 +154,7 @@ namespace Ryujinx.Audio.OpenAL
                     ShouldCallReleaseCallback = true;
                 }
             }
-            
+
             private void SyncQueuedTags()
             {
                 AL.GetSource(SourceId, ALGetSourcei.BuffersQueued,    out int QueuedCount);
@@ -288,7 +289,7 @@ namespace Ryujinx.Audio.OpenAL
             {
                 return Td.ContainsBuffer(Tag);
             }
-            
+
             return false;
         }
 
@@ -298,17 +299,19 @@ namespace Ryujinx.Audio.OpenAL
             {
                 return Td.GetReleasedBuffers(MaxCount);
             }
-            
+
             return null;
         }
 
-        public void AppendBuffer(int Track, long Tag, byte[] Buffer)
+        public void AppendBuffer<T>(int Track, long Tag, T[] Buffer) where T : struct
         {
             if (Tracks.TryGetValue(Track, out Track Td))
             {
                 int BufferId = Td.AppendBuffer(Tag);
 
-                AL.BufferData(BufferId, Td.Format, Buffer, Buffer.Length, Td.SampleRate);
+                int Size = Buffer.Length * Marshal.SizeOf<T>();
+
+                AL.BufferData<T>(BufferId, Td.Format, Buffer, Size, Td.SampleRate);
 
                 AL.SourceQueueBuffer(Td.SourceId, BufferId);
 
@@ -359,7 +362,5 @@ namespace Ryujinx.Audio.OpenAL
 
             return PlaybackState.Stopped;
         }
-
-
     }
 }
