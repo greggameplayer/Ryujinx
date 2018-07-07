@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using static Ryujinx.HLE.Font.SharedFontManager;
 
 namespace Ryujinx
 {
@@ -17,6 +18,7 @@ namespace Ryujinx
         public static float GamePadDeadzone             { get; private set; }
         public static bool  GamePadEnable               { get; private set; }
         public static int   GamePadIndex                { get; private set; }
+		public static string FontFilesPath              { get; private set; }
         public static float GamePadTriggerThreshold     { get; private set; }
 
         public static void Read(Logger Log)
@@ -31,6 +33,7 @@ namespace Ryujinx
 
             Log.SetEnable(LogLevel.Debug,   Convert.ToBoolean(Parser.Value("Logging_Enable_Debug")));
             Log.SetEnable(LogLevel.Stub,    Convert.ToBoolean(Parser.Value("Logging_Enable_Stub")));
+			Ryujinx.HLE.Font.SharedFontManager.FontFilesPathComplete = Convert.ToString(Parser.Value("Font_Files_Path"));
             Log.SetEnable(LogLevel.Info,    Convert.ToBoolean(Parser.Value("Logging_Enable_Info")));
             Log.SetEnable(LogLevel.Warning, Convert.ToBoolean(Parser.Value("Logging_Enable_Warn")));
             Log.SetEnable(LogLevel.Error,   Convert.ToBoolean(Parser.Value("Logging_Enable_Error")));
