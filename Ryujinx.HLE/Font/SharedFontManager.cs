@@ -4,6 +4,7 @@ using Ryujinx.HLE.Logging;
 using Ryujinx.HLE.OsHle;
 using Ryujinx.HLE.OsHle.Handles;
 using System;
+using System.Text;
 using System.Collections.Generic;
 
 namespace Ryujinx.HLE.Font
@@ -19,6 +20,8 @@ namespace Ryujinx.HLE.Font
         private Dictionary<SharedFontType, byte[]> FontEmbeddedPaths;
 
         private uint[] LoadedFonts;
+		
+		public static string FontFilesPathComplete { get; set; }
 
         public SharedFontManager(Logger Log)
         {
@@ -30,12 +33,12 @@ namespace Ryujinx.HLE.Font
 
             FontEmbeddedPaths = new Dictionary<SharedFontType, byte[]>()
             {
-                { SharedFontType.JapanUsEurope,       EmbeddedResource.GetData("FontStandard")                  },
-                { SharedFontType.SimplifiedChinese,   EmbeddedResource.GetData("FontChineseSimplified")         },
-                { SharedFontType.SimplifiedChineseEx, EmbeddedResource.GetData("FontExtendedChineseSimplified") },
-                { SharedFontType.TraditionalChinese,  EmbeddedResource.GetData("FontChineseTraditional")        },
-                { SharedFontType.Korean,              EmbeddedResource.GetData("FontKorean")                    },
-                { SharedFontType.NintendoEx,          EmbeddedResource.GetData("FontNintendoExtended")          }
+                { SharedFontType.JapanUsEurope,       Encoding.ASCII.GetBytes(FontFilesPathComplete + "\\FontStandard.ttf")       },
+                { SharedFontType.SimplifiedChinese,   Encoding.ASCII.GetBytes(FontFilesPathComplete + "\\FontChineseSimplified.ttf")        },
+                { SharedFontType.SimplifiedChineseEx, Encoding.ASCII.GetBytes(FontFilesPathComplete + "\\FontExtendedChineseSimplified.ttf") },
+                { SharedFontType.TraditionalChinese,  Encoding.ASCII.GetBytes(FontFilesPathComplete + "\\FontChineseTraditional.ttf")       },
+                { SharedFontType.Korean,              Encoding.ASCII.GetBytes(FontFilesPathComplete + "\\FontKorean.ttf")                   },
+                { SharedFontType.NintendoEx,          Encoding.ASCII.GetBytes(FontFilesPathComplete + "\\FontNintendoExtended.ttf")          }
             };
 
             LoadedFonts       = new uint[FontEmbeddedPaths.Count];
