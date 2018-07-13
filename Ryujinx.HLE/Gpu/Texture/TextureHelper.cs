@@ -35,8 +35,12 @@ namespace Ryujinx.HLE.Gpu.Texture
                     return Texture.Width * Texture.Height * 8;
 
                 case GalTextureFormat.A8B8G8R8:
+                case GalTextureFormat.A2B10G10R10:
                 case GalTextureFormat.R32:
+                case GalTextureFormat.R16_G16:
                 case GalTextureFormat.ZF32:
+                case GalTextureFormat.Z24S8:
+                case GalTextureFormat.BF10GF11RF11:
                     return Texture.Width * Texture.Height * 4;
 
                 case GalTextureFormat.A1B5G5R5:
@@ -126,6 +130,46 @@ namespace Ryujinx.HLE.Gpu.Texture
                 case GalTextureFormat.Astc2D10x6:
                 {
                     return CompressedTextureSize(Texture.Width, Texture.Height, 10, 6, 16);
+                }
+                    
+                case GalTextureFormat.Astc2D5x5:
+                {
+                    int W = (Texture.Width  + 4) / 5;
+                    int H = (Texture.Height + 4) / 5;
+
+                    return W * H * 16;
+                }
+                            
+                case GalTextureFormat.Astc2D6x6:
+                {
+                    int W = (Texture.Width  + 5) / 6;
+                    int H = (Texture.Height + 5) / 6;
+
+                    return W * H * 16;
+                }
+                    
+                case GalTextureFormat.Astc2D8x8:
+                {
+                    int W = (Texture.Width  + 7) / 8;
+                    int H = (Texture.Height + 7) / 8;
+
+                    return W * H * 16;
+                }
+                    
+                case GalTextureFormat.Astc2D10x10:
+                {
+                    int W = (Texture.Width  + 9) / 10;
+                    int H = (Texture.Height + 9) / 10;
+
+                    return W * H * 16;
+                }
+                    
+                case GalTextureFormat.Astc2D12x12:
+                {
+                    int W = (Texture.Width  + 11) / 12;
+                    int H = (Texture.Height + 11) / 12;
+
+                    return W * H * 16;
                 }
             }
 
