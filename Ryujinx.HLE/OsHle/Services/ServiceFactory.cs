@@ -78,12 +78,15 @@ namespace Ryujinx.HLE.OsHle.Services
                 case "hid":
                     return new IHidServer();
 
+                case "hwopus":
+                    return new IHardwareOpusDecoderManager();
+
                 case "lm":
                     return new ILogService();
-                    
+
                 case "mm:u":
                     return new IRequest();
-                    
+
                 case "nfp:user":
                     return new IUserManager();
 
