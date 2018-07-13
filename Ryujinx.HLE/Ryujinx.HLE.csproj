@@ -40,4 +40,8 @@
     <ProjectReference Include="..\Ryujinx.Graphics\Ryujinx.Graphics.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Concentus" Version="1.1.7" />
+  </ItemGroup>
+
 </Project>
