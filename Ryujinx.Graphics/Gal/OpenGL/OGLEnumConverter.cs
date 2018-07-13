@@ -132,6 +132,7 @@ namespace Ryujinx.Graphics.Gal.OpenGL
                 case GalTextureFormat.R32G32B32A32: return (PixelFormat.Rgba,           PixelType.Float);
                 case GalTextureFormat.R16G16B16A16: return (PixelFormat.Rgba,           PixelType.HalfFloat);
                 case GalTextureFormat.A8B8G8R8:     return (PixelFormat.Rgba,           PixelType.UnsignedByte);
+                case GalTextureFormat.R16_G16:      return (PixelFormat.RgInteger,      PixelType.UnsignedShort);
                 case GalTextureFormat.A2B10G10R10:  return (PixelFormat.Rgba,           PixelType.UnsignedInt2101010Reversed);
                 case GalTextureFormat.R32:          return (PixelFormat.Red,            PixelType.Float);
                 case GalTextureFormat.A1B5G5R5:     return (PixelFormat.Rgba,           PixelType.UnsignedShort5551);
