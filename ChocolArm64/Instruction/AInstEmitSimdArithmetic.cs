@@ -1215,6 +1215,11 @@ namespace ChocolArm64.Instruction
             EmitVectorWidenRnRmBinaryOpZx(Context, () => Context.Emit(OpCodes.Add));
         }
 
+        public static void Uaddlp_V(AILEmitterCtx Context)
+        {
+            EmitVectorPairwiseOpZx(Context, () => Context.Emit(OpCodes.Add));
+        }
+
         public static void Uaddlv_V(AILEmitterCtx Context)
         {
             AOpCodeSimd Op = (AOpCodeSimd)Context.CurrOp;
