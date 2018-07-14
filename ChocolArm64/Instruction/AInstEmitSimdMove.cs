@@ -340,17 +340,18 @@ namespace ChocolArm64.Instruction
         {
             AOpCodeSimdReg Op = (AOpCodeSimdReg)Context.CurrOp;
 
-            int Bytes = Op.GetBitsCount() >> 3;
+            int Words = Op.GetBitsCount() >> 4;
+            int Pairs = Words >> Op.Size;
 
-            int Elems = Bytes >> Op.Size;
-
-            for (int Index = 0; Index < Elems; Index++)
+            for (int Index = 0; Index < Pairs; Index++)
             {
-                int Elem = (Index & ~1) + Part;
+                int Idx = Index << 1;
 
-                EmitVectorExtractZx(Context, (Index & 1) == 0 ? Op.Rn : Op.Rm, Elem, Op.Size);
+                EmitVectorExtractZx(Context, Op.Rn, Idx + Part, Op.Size);
+                EmitVectorExtractZx(Context, Op.Rm, Idx + Part, Op.Size);
 
-                EmitVectorInsertTmp(Context, Index, Op.Size);
+                EmitVectorInsertTmp(Context, Idx + 1, Op.Size);
+                EmitVectorInsertTmp(Context, Idx    , Op.Size);
             }
 
             Context.EmitLdvectmp();
@@ -366,18 +367,18 @@ namespace ChocolArm64.Instruction
         {
             AOpCodeSimdReg Op = (AOpCodeSimdReg)Context.CurrOp;
 
-            int Bytes = Op.GetBitsCount() >> 3;
+            int Words = Op.GetBitsCount() >> 4;
+            int Pairs = Words >> Op.Size;
 
-            int Elems = Bytes >> Op.Size;
-            int Half  = Elems >> 1;
-
-            for (int Index = 0; Index < Elems; Index++)
+            for (int Index = 0; Index < Pairs; Index++)
             {
-                int Elem = Part + ((Index & (Half - 1)) << 1);
+                int Idx = Index << 1;
 
-                EmitVectorExtractZx(Context, Index < Half ? Op.Rn : Op.Rm, Elem, Op.Size);
+                EmitVectorExtractZx(Context, Op.Rn, Idx + Part, Op.Size);
+                EmitVectorExtractZx(Context, Op.Rm, Idx + Part, Op.Size);
 
-                EmitVectorInsertTmp(Context, Index, Op.Size);
+                EmitVectorInsertTmp(Context, Pairs + Index, Op.Size);
+                EmitVectorInsertTmp(Context,         Index, Op.Size);
             }
 
             Context.EmitLdvectmp();
@@ -393,18 +394,20 @@ namespace ChocolArm64.Instruction
         {
             AOpCodeSimdReg Op = (AOpCodeSimdReg)Context.CurrOp;
 
-            int Bytes = Op.GetBitsCount() >> 3;
+            int Words = Op.GetBitsCount() >> 4;
+            int Pairs = Words >> Op.Size;
 
-            int Elems = Bytes >> Op.Size;
-            int Half  = Elems >> 1;
+            int Base = Part != 0 ? Pairs : 0;
 
-            for (int Index = 0; Index < Elems; Index++)
+            for (int Index = 0; Index < Pairs; Index++)
             {
-                int Elem = Part * Half + (Index >> 1);
+                int Idx = Index << 1;
 
-                EmitVectorExtractZx(Context, (Index & 1) == 0 ? Op.Rn : Op.Rm, Elem, Op.Size);
+                EmitVectorExtractZx(Context, Op.Rn, Base + Index, Op.Size);
+                EmitVectorExtractZx(Context, Op.Rm, Base + Index, Op.Size);
 
-                EmitVectorInsertTmp(Context, Index, Op.Size);
+                EmitVectorInsertTmp(Context, Idx + 1, Op.Size);
+                EmitVectorInsertTmp(Context, Idx    , Op.Size);
             }
 
             Context.EmitLdvectmp();
