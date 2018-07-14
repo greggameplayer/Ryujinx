@@ -10,7 +10,7 @@ namespace ChocolArm64.Translation
 {
     class AILEmitterCtx
     {
-        private ATranslator Translator;
+        private ATranslatorCache Cache;
 
         private Dictionary<long, AILLabel> Labels;
 
@@ -40,29 +40,14 @@ namespace ChocolArm64.Translation
         private const int Tmp5Index = -5;
 
         public AILEmitterCtx(
-            ATranslator Translator,
-            ABlock[]    Graph,
-            ABlock      Root,
-            string      SubName)
+            ATranslatorCache Cache,
+            ABlock[]         Graph,
+            ABlock           Root,
+            string           SubName)
         {
-            if (Translator == null)
-            {
-                throw new ArgumentNullException(nameof(Translator));
-            }
-
-            if (Graph == null)
-            {
-                throw new ArgumentNullException(nameof(Graph));
-            }
-
-            if (Root == null)
-            {
-                throw new ArgumentNullException(nameof(Root));
-            }
-
-            this.Translator = Translator;
-            this.Graph      = Graph;
-            this.Root       = Root;
+            this.Cache = Cache ?? throw new ArgumentNullException(nameof(Cache));
+            this.Graph = Graph ?? throw new ArgumentNullException(nameof(Graph));
+            this.Root  = Root  ?? throw new ArgumentNullException(nameof(Root));
 
             Labels = new Dictionary<long, AILLabel>();
 
@@ -124,7 +109,12 @@ namespace ChocolArm64.Translation
                 return false;
             }
 
-            if (!Translator.TryGetCachedSub(CurrOp, out ATranslatedSub Sub))
+            if (CurrOp.Emitter != AInstEmit.Bl)
+            {
+                return false;
+            }
+
+            if (!Cache.TryGetSubroutine(((AOpCodeBImmAl)CurrOp).Imm, out ATranslatedSub Subroutine))
             {
                 return false;
             }
@@ -134,7 +124,7 @@ namespace ChocolArm64.Translation
                 EmitLdarg(Index);
             }
 
-            foreach (ARegister Reg in Sub.Params)
+            foreach (ARegister Reg in Subroutine.Params)
             {
                 switch (Reg.Type)
                 {
@@ -144,9 +134,9 @@ namespace ChocolArm64.Translation
                 }
             }
 
-            EmitCall(Sub.Method);
+            EmitCall(Subroutine.Method);
 
-            Sub.AddCaller(Root.Position);
+            Subroutine.AddCaller(Root.Position);
 
             return true;
         }
