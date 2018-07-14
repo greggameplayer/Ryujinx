@@ -260,34 +260,7 @@ namespace ChocolArm64.Instruction
 
         public static void Faddp_V(AILEmitterCtx Context)
         {
-            AOpCodeSimdReg Op = (AOpCodeSimdReg)Context.CurrOp;
-
-            int SizeF = Op.Size & 1;
-
-            int Bytes = Op.GetBitsCount() >> 3;
-
-            int Elems = Bytes >> SizeF + 2;
-            int Half  = Elems >> 1;
-
-            for (int Index = 0; Index < Elems; Index++)
-            {
-                int Elem = (Index & (Half - 1)) << 1;
-
-                EmitVectorExtractF(Context, Index < Half ? Op.Rn : Op.Rm, Elem + 0, SizeF);
-                EmitVectorExtractF(Context, Index < Half ? Op.Rn : Op.Rm, Elem + 1, SizeF);
-
-                Context.Emit(OpCodes.Add);
-
-                EmitVectorInsertTmpF(Context, Index, SizeF);
-            }
-
-            Context.EmitLdvectmp();
-            Context.EmitStvec(Op.Rd);
-
-            if (Op.RegisterSize == ARegisterSize.SIMD64)
-            {
-                EmitVectorZeroUpper(Context, Op.Rd);
-            }
+            EmitVectorPairwiseFloat(Context, OpCodes.Add);
         }
 
         public static void Fdiv_S(AILEmitterCtx Context)
@@ -364,6 +337,11 @@ namespace ChocolArm64.Instruction
                 }
             });
         }
+            
+        public static void Fmaxp_V(AILEmitterCtx Context)
+        {
+            EmitVectorPairwiseFloat(Context, nameof(AVectorHelper.MaxF), nameof(AVectorHelper.Max));
+        }
 
         public static void Fmin_S(AILEmitterCtx Context)
         {
@@ -408,6 +386,12 @@ namespace ChocolArm64.Instruction
                 }
             });
         }
+            
+        public static void Fminp_V(AILEmitterCtx Context)
+        {
+            EmitVectorPairwiseFloat(Context, nameof(AVectorHelper.MinF), nameof(AVectorHelper.Min));
+        }
+
 
         public static void Fmaxnm_S(AILEmitterCtx Context)
         {
@@ -417,6 +401,11 @@ namespace ChocolArm64.Instruction
         public static void Fminnm_S(AILEmitterCtx Context)
         {
             Fmin_S(Context);
+        }
+        
+        public static void Fminnm_V(AILEmitterCtx Context)
+        {
+            Fmin_V(Context);
         }
 
         public static void Fmla_Se(AILEmitterCtx Context)
@@ -443,6 +432,15 @@ namespace ChocolArm64.Instruction
             {
                 Context.Emit(OpCodes.Mul);
                 Context.Emit(OpCodes.Add);
+            });
+        }
+        
+        public static void Fmls_Se(AILEmitterCtx Context)
+        {
+            EmitScalarTernaryOpByElemF(Context, () =>
+            {
+                Context.Emit(OpCodes.Mul);
+                Context.Emit(OpCodes.Sub);
             });
         }
 
@@ -1041,6 +1039,29 @@ namespace ChocolArm64.Instruction
         {
             EmitVectorWidenRnRmBinaryOpSx(Context, () => Context.Emit(OpCodes.Mul));
         }
+        
+        public static void Sqdmulh_V(AILEmitterCtx Context)
+        {
+            AOpCodeSimdReg Op = (AOpCodeSimdReg)Context.CurrOp;
+                
+            int SizeF = Op.Size & 1;
+               
+            EmitVectorWidenRnRmBinaryOpSx(Context, () =>
+            {
+                Context.Emit(OpCodes.Mul);
+
+                if (SizeF == 0)
+                {
+                    Context.EmitLdc_R4(2);
+                }
+                else /* if (SizeF == 1) */
+                {
+                    Context.EmitLdc_R8(2);
+                }
+    
+                Context.Emit(OpCodes.Mul);
+            }); 
+        }
 
         public static void Sqxtn_S(AILEmitterCtx Context)
         {
@@ -1127,6 +1148,11 @@ namespace ChocolArm64.Instruction
         public static void Uaddl_V(AILEmitterCtx Context)
         {
             EmitVectorWidenRnRmBinaryOpZx(Context, () => Context.Emit(OpCodes.Add));
+        }
+
+        public static void Uaddlp_V(AILEmitterCtx Context)
+        {
+            EmitVectorPairwiseOpZx(Context, () => Context.Emit(OpCodes.Add));
         }
 
         public static void Uaddlv_V(AILEmitterCtx Context)

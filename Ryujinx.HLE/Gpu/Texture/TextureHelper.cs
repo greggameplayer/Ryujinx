@@ -35,8 +35,12 @@ namespace Ryujinx.HLE.Gpu.Texture
                     return Texture.Width * Texture.Height * 8;
 
                 case GalTextureFormat.A8B8G8R8:
+                case GalTextureFormat.A2B10G10R10:
                 case GalTextureFormat.R32:
+                case GalTextureFormat.R16_G16:
                 case GalTextureFormat.ZF32:
+                case GalTextureFormat.Z24S8:
+                case GalTextureFormat.BF10GF11RF11:
                     return Texture.Width * Texture.Height * 4;
 
                 case GalTextureFormat.A1B5G5R5:
@@ -55,6 +59,8 @@ namespace Ryujinx.HLE.Gpu.Texture
                 }
 
                 case GalTextureFormat.BC7U:
+                case GalTextureFormat.BC6H_SF16:
+                case GalTextureFormat.BC6H_UF16:
                 case GalTextureFormat.BC2:
                 case GalTextureFormat.BC3:
                 case GalTextureFormat.BC5:
