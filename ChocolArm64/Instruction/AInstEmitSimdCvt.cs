@@ -362,7 +362,7 @@ namespace ChocolArm64.Instruction
 
             int FBits = GetFBits(Context);
 
-            int Bytes = Context.CurrOp.GetBitsCount() >> 3;
+            int Bytes = Op.GetBitsCount() >> 3;
 
             for (int Index = 0; Index < (Bytes >> SizeI); Index++)
             {
@@ -451,7 +451,7 @@ namespace ChocolArm64.Instruction
 
             int FBits = GetFBits(Context);
 
-            int Bytes = Context.CurrOp.GetBitsCount() >> 3;
+            int Bytes = Op.GetBitsCount() >> 3;
 
             for (int Index = 0; Index < (Bytes >> SizeI); Index++)
             {
