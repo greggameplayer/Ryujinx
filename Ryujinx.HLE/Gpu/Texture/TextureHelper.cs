@@ -67,8 +67,6 @@ namespace Ryujinx.HLE.Gpu.Texture
                 case GalTextureFormat.BC6H_SF16:
                 case GalTextureFormat.BC6H_UF16:
                 case GalTextureFormat.BC7U:
-                case GalTextureFormat.BC6H_SF16:
-                case GalTextureFormat.BC6H_UF16:
                 case GalTextureFormat.BC2:
                 case GalTextureFormat.BC3:
                 case GalTextureFormat.BC5:

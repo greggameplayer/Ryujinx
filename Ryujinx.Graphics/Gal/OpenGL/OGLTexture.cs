@@ -215,8 +215,6 @@ namespace Ryujinx.Graphics.Gal.OpenGL
                 case GalTextureFormat.BC6H_UF16:
                 case GalTextureFormat.BC6H_SF16:
                 case GalTextureFormat.BC7U:
-                case GalTextureFormat.BC6H_UF16:
-                case GalTextureFormat.BC6H_SF16:
                 case GalTextureFormat.BC1:
                 case GalTextureFormat.BC2:
                 case GalTextureFormat.BC3:

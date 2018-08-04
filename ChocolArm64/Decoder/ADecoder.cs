@@ -19,7 +19,11 @@ namespace ChocolArm64.Decoder
             OpActivators = new ConcurrentDictionary<Type, OpActivator>();
         }
 
-        public static ABlock DecodeBasicBlock(AThreadState State, AMemory Memory, long Start)
+        public static ABlock DecodeBasicBlock(
+            AThreadState State,
+            ATranslator  Translator,
+            AMemory      Memory,
+            long         Start)
         {
             ABlock Block = new ABlock(Start);
 
@@ -29,10 +33,10 @@ namespace ChocolArm64.Decoder
         }
 
         public static (ABlock[] Graph, ABlock Root) DecodeSubroutine(
-            ATranslatorCache Cache,
-            AThreadState     State,
-            AMemory          Memory,
-            long             Start)
+            AThreadState State,
+            ATranslator  Translator,
+            AMemory      Memory,
+            long         Start)
         {
             Dictionary<long, ABlock> Visited    = new Dictionary<long, ABlock>();
             Dictionary<long, ABlock> VisitedEnd = new Dictionary<long, ABlock>();
@@ -75,7 +79,7 @@ namespace ChocolArm64.Decoder
                     {
                         if (Op.Emitter == AInstEmit.Bl)
                         {
-                            HasCachedSub = Cache.HasSubroutine(Op.Imm);
+                            HasCachedSub = Translator.HasCachedSub(Op.Imm);
                         }
                         else
                         {

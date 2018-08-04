@@ -419,7 +419,7 @@ namespace Ryujinx.HLE.Gpu.Engines
             //to VertexEndGl since that triggers rendering, and in the
             //case that something is bugged and causes an absurd amount of
             //draw calls, this prevents the system from freezing (and throws instead).
-            if (MethAddr == 0x585 && ++CallCount > MaxCallCountPerRun)
+            if (MethAddr == 0x600 && ++CallCount > MaxCallCountPerRun)
             {
                 GpuExceptionHelper.ThrowCallCoundExceeded();
             }

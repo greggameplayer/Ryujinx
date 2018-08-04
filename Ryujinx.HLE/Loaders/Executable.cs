@@ -1,7 +1,6 @@
 using ChocolArm64.Memory;
 using Ryujinx.HLE.Loaders.Executables;
 using Ryujinx.HLE.OsHle;
-using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -9,11 +8,11 @@ namespace Ryujinx.HLE.Loaders
 {
     class Executable
     {
-        private AMemory Memory;
-
         private List<ElfDyn> Dynamic;
 
-        public ReadOnlyCollection<ElfSym> SymbolTable;
+        private Dictionary<long, string> m_SymbolTable;
+
+        public IReadOnlyDictionary<long, string> SymbolTable => m_SymbolTable;
 
         public string Name { get; private set; }
 
@@ -93,18 +92,14 @@ namespace Ryujinx.HLE.Loaders
 
             long SymEntSize = GetFirstValue(ElfDynTag.DT_SYMENT);
 
-            List<ElfSym> Symbols = new List<ElfSym>();
-
             while ((ulong)SymTblAddr < (ulong)StrTblAddr)
             {
                 ElfSym Sym = GetSymbol(SymTblAddr, StrTblAddr);
 
-                Symbols.Add(Sym);
+                m_SymbolTable.TryAdd(Sym.Value, Sym.Name);
 
                 SymTblAddr += SymEntSize;
             }
-
-            SymbolTable = Array.AsReadOnly(Symbols.OrderBy(x => x.Value).ToArray());
         }
 
         private void WriteData(

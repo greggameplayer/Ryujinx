@@ -22,10 +22,13 @@ namespace Ryujinx.HLE.OsHle.Services.Hid
                 { 31,  ActivateKeyboard                        },
                 { 66,  StartSixAxisSensor                      },
                 { 79,  SetGyroscopeZeroDriftMode               },
+				{ 82,  IsSixAxisSensorAtRest                   },
                 { 100, SetSupportedNpadStyleSet                },
                 { 101, GetSupportedNpadStyleSet                },
                 { 102, SetSupportedNpadIdType                  },
                 { 103, ActivateNpad                            },
+				{ 106, AcquireNpadStyleSetUpdateEventHandle    },
+				{ 107, DisconnectNpad                          },
                 { 108, GetPlayerLedPattern                     },
                 { 120, SetNpadJoyHoldType                      },
                 { 121, GetNpadJoyHoldType                      },
@@ -54,6 +57,40 @@ namespace Ryujinx.HLE.OsHle.Services.Hid
 
             return 0;
         }
+
+		public long IsSixAxisSensorAtRest(ServiceCtx Context)
+		{
+			int  Handle               = Context.RequestData.ReadInt32();
+            long AppletResourceUserId = Context.RequestData.ReadInt64();
+			
+			Context.ResponseData.Write(true);
+			
+			return 0;
+		}
+		
+		public long AcquireNpadStyleSetUpdateEventHandle(ServiceCtx Context)
+		{
+			int Unknown = Context.RequestData.ReadInt32();
+			
+			long AppletResourceUserId = Context.RequestData.ReadInt64();
+			
+			long Unknown1 = Context.RequestData.ReadInt64();
+			
+			int Handle = Context.Process.HandleTable.OpenHandle(Context.Ns.Os.NpadStyleSetUpdateEvent);
+
+            Context.Response.HandleDesc = IpcHandleDesc.MakeCopy(Handle);
+			
+			return 0;
+		}
+		
+		public long DisconnectNpad(ServiceCtx Context)
+		{
+			int Id = Context.RequestData.ReadInt32();
+			
+			long AppletResourceUserId = Context.RequestData.ReadInt64();
+			
+			return 0;
+		}
 
         public long ActivateTouchScreen(ServiceCtx Context)
         {

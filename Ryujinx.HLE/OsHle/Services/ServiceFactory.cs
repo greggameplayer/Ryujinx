@@ -100,6 +100,12 @@ namespace Ryujinx.HLE.OsHle.Services
 
                 case "lm":
                     return new ILogService();
+					
+                case "mii:e":
+                    return new Ns.IStaticService();
+					
+                case "mii:u":
+                    return new Ns.IStaticService();
 
                 case "mm:u":
                     return new IRequest();

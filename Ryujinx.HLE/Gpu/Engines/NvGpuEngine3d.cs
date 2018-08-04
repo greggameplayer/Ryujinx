@@ -249,12 +249,12 @@ namespace Ryujinx.HLE.Gpu.Engines
             {
                 switch (FrontFace)
                 {
-                    case GalFrontFace.CW:
-                        FrontFace = GalFrontFace.CCW;
+                    case GalFrontFace.Cw:
+                        FrontFace = GalFrontFace.Ccw;
                         break;
 
-                    case GalFrontFace.CCW:
-                        FrontFace = GalFrontFace.CW;
+                    case GalFrontFace.Ccw:
+                        FrontFace = GalFrontFace.Cw;
                         break;
                 }
             }
@@ -280,8 +280,8 @@ namespace Ryujinx.HLE.Gpu.Engines
                 return;
             }
 
-            float SignX = GetFlipSign(NvGpuEngine3dReg.ViewportScaleX);
-            float SignY = GetFlipSign(NvGpuEngine3dReg.ViewportScaleY);
+            float SignX = GetFlipSign(NvGpuEngine3dReg.ViewportNScaleX);
+            float SignY = GetFlipSign(NvGpuEngine3dReg.ViewportNScaleY);
 
             GalFrontFace FrontFace = (GalFrontFace)ReadRegister(NvGpuEngine3dReg.FrontFace);
 
