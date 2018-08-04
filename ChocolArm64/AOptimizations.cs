@@ -2,7 +2,7 @@ using System.Runtime.Intrinsics.X86;
 
 public static class AOptimizations
 {
-    public static bool DisableMemoryChecks = false;
+    public static bool GenerateCallStack = true;
 
     private static bool UseAllSseIfAvailable = true;
 

@@ -4,6 +4,7 @@ using Ryujinx.HLE.Font;
 using Ryujinx.HLE.Gpu;
 using Ryujinx.HLE.Input;
 using Ryujinx.HLE.Logging;
+using Ryujinx.HLE.Memory;
 using Ryujinx.HLE.OsHle;
 using Ryujinx.HLE.Settings;
 using System;
@@ -15,6 +16,8 @@ namespace Ryujinx.HLE
         internal IAalOutput AudioOut { get; private set; }
 
         public Logger Log { get; private set; }
+
+        internal DeviceMemory Memory { get; private set; }
 
         internal NvGpu Gpu { get; private set; }
 
@@ -48,6 +51,8 @@ namespace Ryujinx.HLE
 
             Log = new Logger();
 
+            Memory = new DeviceMemory();
+
             Gpu = new NvGpu(Renderer);
 
             VFs = new VirtualFileSystem();
@@ -58,15 +63,7 @@ namespace Ryujinx.HLE
 
             Statistics = new PerformanceStatistics();
 
-            Hid = new Hid(Log);
-
-            Font = new SharedFontManager(Log);
-
-            Os.HidSharedMem.MemoryMapped    += Hid.ShMemMap;
-            Os.HidSharedMem.MemoryUnmapped  += Hid.ShMemUnmap;
-
-            Os.FontSharedMem.MemoryMapped   += Font.ShMemMap;
-            Os.FontSharedMem.MemoryUnmapped += Font.ShMemUnmap;
+            Hid = new Hid(this, Os.HidSharedMem.PA);
         }
 
         public void LoadCart(string ExeFsDir, string RomFsFile = null)
