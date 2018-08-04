@@ -381,7 +381,9 @@ namespace ChocolArm64
             SetA64("0x001110<<1xxxxx101000xxxxxxxxxx", AInstEmit.Smlsl_V,       typeof(AOpCodeSimdReg));
             SetA64("0x001110<<1xxxxx110000xxxxxxxxxx", AInstEmit.Smull_V,       typeof(AOpCodeSimdReg));
             SetA64("0x001110<<1xxxxx101101xxxxxxxxxx", AInstEmit.Sqdmulh_V,     typeof(AOpCodeSimdReg));
+			SetA64("0x10111100>>>xxx100001xxxxxxxxxx", AInstEmit.Sqshrun_V,     typeof(AOpCodeSimdShImm));
             SetA64("0x00111100>>>xxx100111xxxxxxxxxx", AInstEmit.Sqrshrn_V,     typeof(AOpCodeSimdShImm));
+			SetA64("0x10111100>>>xxx100011xxxxxxxxxx", AInstEmit.Sqrshrun_V,    typeof(AOpCodeSimdShImm));
             SetA64("01011110<<100001010010xxxxxxxxxx", AInstEmit.Sqxtn_S,       typeof(AOpCodeSimd));
             SetA64("0x001110<<100001010010xxxxxxxxxx", AInstEmit.Sqxtn_V,       typeof(AOpCodeSimd));
             SetA64("01111110<<100001001010xxxxxxxxxx", AInstEmit.Sqxtun_S,      typeof(AOpCodeSimd));
@@ -441,6 +443,7 @@ namespace ChocolArm64
             SetA64("0x10111100>>>xxx000101xxxxxxxxxx", AInstEmit.Usra_V,        typeof(AOpCodeSimdShImm));
             SetA64("0110111101xxxxxx000101xxxxxxxxxx", AInstEmit.Usra_V,        typeof(AOpCodeSimdShImm));
             SetA64("0x101110<<1xxxxx001100xxxxxxxxxx", AInstEmit.Usubw_V,       typeof(AOpCodeSimdReg));
+			SetA64("0x101110<<1xxxxx000101xxxxxxxxxx", AInstEmit.Urhadd_V,      typeof(AOpCodeSimdReg));
             SetA64("0>001110<<0xxxxx000110xxxxxxxxxx", AInstEmit.Uzp1_V,        typeof(AOpCodeSimdReg));
             SetA64("0>001110<<0xxxxx010110xxxxxxxxxx", AInstEmit.Uzp2_V,        typeof(AOpCodeSimdReg));
             SetA64("0x001110<<100001001010xxxxxxxxxx", AInstEmit.Xtn_V,         typeof(AOpCodeSimd));

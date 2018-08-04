@@ -1256,10 +1256,27 @@ namespace ChocolArm64.Instruction
         {
             EmitVectorSaturatingNarrowOpZxZx(Context, () => { });
         }
+		
+		public static void Urhadd_V(AILEmitterCtx Context)
+		{
+			
+			EmitVectorBinaryOpZx(Context, () =>
+            {
+				Context.Emit(OpCodes.Add);
+				
+				Context.EmitLdc_I8(1);
+				
+                Context.Emit(OpCodes.Add);
 
-        public static void Usubw_V(AILEmitterCtx Context)
-        {
-            EmitVectorWidenRmBinaryOpZx(Context, () => Context.Emit(OpCodes.Sub));
-        }
+                Context.EmitLdc_I4(1);
+
+                Context.Emit(OpCodes.Shr_Un);
+            });
+		}
+		
+        public static void Usubw_V(AILEmitterCtx Context) 
+        { 
+            EmitVectorWidenRmBinaryOpZx(Context, () => Context.Emit(OpCodes.Sub)); 
+        } 
     }
 }
