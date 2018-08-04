@@ -1073,6 +1073,46 @@ namespace ChocolArm64.Instruction
             }); 
         }
 
+        public static void Sqabs_S(AILEmitterCtx Context)
+        {
+            EmitScalarSaturatingUnaryOpSx(Context, () => EmitAbs(Context));
+        }
+
+        public static void Sqabs_V(AILEmitterCtx Context)
+        {
+            EmitVectorSaturatingUnaryOpSx(Context, () => EmitAbs(Context));
+        }
+
+        public static void Sqadd_S(AILEmitterCtx Context)
+        {
+            EmitScalarSaturatingBinaryOpSx(Context, SaturatingFlags.Add);
+        }
+
+        public static void Sqadd_V(AILEmitterCtx Context)
+        {
+            EmitVectorSaturatingBinaryOpSx(Context, SaturatingFlags.Add);
+        }
+
+        public static void Sqneg_S(AILEmitterCtx Context)
+        {
+            EmitScalarSaturatingUnaryOpSx(Context, () => Context.Emit(OpCodes.Neg));
+        }
+
+        public static void Sqneg_V(AILEmitterCtx Context)
+        {
+            EmitVectorSaturatingUnaryOpSx(Context, () => Context.Emit(OpCodes.Neg));
+        }
+
+        public static void Sqsub_S(AILEmitterCtx Context)
+        {
+            EmitScalarSaturatingBinaryOpSx(Context, SaturatingFlags.Sub);
+        }
+
+        public static void Sqsub_V(AILEmitterCtx Context)
+        {
+            EmitVectorSaturatingBinaryOpSx(Context, SaturatingFlags.Sub);
+        }
+
         public static void Sqxtn_S(AILEmitterCtx Context)
         {
             EmitScalarSaturatingNarrowOpSxSx(Context, () => { });
@@ -1118,6 +1158,16 @@ namespace ChocolArm64.Instruction
         public static void Subhn_V(AILEmitterCtx Context)
         {
             EmitHighNarrow(Context, () => Context.Emit(OpCodes.Sub), Round: false);
+        }
+
+        public static void Suqadd_S(AILEmitterCtx Context)
+        {
+            EmitScalarSaturatingBinaryOpSx(Context, SaturatingFlags.Accumulate);
+        }
+
+        public static void Suqadd_V(AILEmitterCtx Context)
+        {
+            EmitVectorSaturatingBinaryOpSx(Context, SaturatingFlags.Accumulate);
         }
 
         public static void Uaba_V(AILEmitterCtx Context)
@@ -1247,6 +1297,26 @@ namespace ChocolArm64.Instruction
             EmitVectorWidenRnRmBinaryOpZx(Context, () => Context.Emit(OpCodes.Mul));
         }
 
+        public static void Uqadd_S(AILEmitterCtx Context)
+        {
+            EmitScalarSaturatingBinaryOpZx(Context, SaturatingFlags.Add);
+        }
+
+        public static void Uqadd_V(AILEmitterCtx Context)
+        {
+            EmitVectorSaturatingBinaryOpZx(Context, SaturatingFlags.Add);
+        }
+
+        public static void Uqsub_S(AILEmitterCtx Context)
+        {
+            EmitScalarSaturatingBinaryOpZx(Context, SaturatingFlags.Sub);
+        }
+
+        public static void Uqsub_V(AILEmitterCtx Context)
+        {
+            EmitVectorSaturatingBinaryOpZx(Context, SaturatingFlags.Sub);
+        }
+
         public static void Uqxtn_S(AILEmitterCtx Context)
         {
             EmitScalarSaturatingNarrowOpZxZx(Context, () => { });
@@ -1278,5 +1348,19 @@ namespace ChocolArm64.Instruction
         { 
             EmitVectorWidenRmBinaryOpZx(Context, () => Context.Emit(OpCodes.Sub)); 
         } 
+        public static void Usqadd_S(AILEmitterCtx Context)
+        {
+            EmitScalarSaturatingBinaryOpZx(Context, SaturatingFlags.Accumulate);
+        }
+
+        public static void Usqadd_V(AILEmitterCtx Context)
+        {
+            EmitVectorSaturatingBinaryOpZx(Context, SaturatingFlags.Accumulate);
+        }
+
+        public static void Usubw_V(AILEmitterCtx Context)
+        {
+            EmitVectorWidenRmBinaryOpZx(Context, () => Context.Emit(OpCodes.Sub));
+        }
     }
 }
