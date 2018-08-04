@@ -35,5 +35,12 @@ namespace Ryujinx.Graphics.Gal
             int  DstY1);
 
         void GetBufferData(long Key, Action<byte[]> Callback);
+
+        void SetBufferData(
+            long             Key,
+            int              Width,
+            int              Height,
+            GalTextureFormat Format,
+            byte[]           Buffer);
     }
 }

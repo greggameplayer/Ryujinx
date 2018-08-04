@@ -3,8 +3,7 @@ using Ryujinx.HLE.Loaders.Executables;
 using Ryujinx.HLE.OsHle;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
+using System.IO;
 
 namespace Ryujinx.HLE.Loaders
 {
@@ -18,6 +17,10 @@ namespace Ryujinx.HLE.Loaders
 
         public string Name { get; private set; }
 
+        public string FilePath { get; private set; }
+
+        private AMemory Memory;
+
         public long ImageBase { get; private set; }
         public long ImageEnd  { get; private set; }
 
@@ -25,7 +28,14 @@ namespace Ryujinx.HLE.Loaders
         {
             Dynamic = new List<ElfDyn>();
 
-            Name = Exe.Name;
+            m_SymbolTable = new Dictionary<long, string>();
+
+            FilePath = Exe.FilePath;
+
+            if (FilePath != null)
+            {
+                Name = Path.GetFileNameWithoutExtension(FilePath.Replace(Homebrew.TemporaryNroSuffix, ""));
+            }
 
             this.Memory    = Memory;
             this.ImageBase = ImageBase;

@@ -1093,6 +1093,11 @@ namespace ChocolArm64.Instruction
             EmitVectorSaturatingNarrowOpSxZx(Context, () => { });
         }
 
+        public static void Ssubw_V(AILEmitterCtx Context)
+        {
+            EmitVectorWidenRmBinaryOpSx(Context, () => Context.Emit(OpCodes.Sub));
+        }
+
         public static void Sub_S(AILEmitterCtx Context)
         {
             EmitScalarBinaryOpZx(Context, () => Context.Emit(OpCodes.Sub));
@@ -1250,6 +1255,11 @@ namespace ChocolArm64.Instruction
         public static void Uqxtn_V(AILEmitterCtx Context)
         {
             EmitVectorSaturatingNarrowOpZxZx(Context, () => { });
+        }
+
+        public static void Usubw_V(AILEmitterCtx Context)
+        {
+            EmitVectorWidenRmBinaryOpZx(Context, () => Context.Emit(OpCodes.Sub));
         }
     }
 }
