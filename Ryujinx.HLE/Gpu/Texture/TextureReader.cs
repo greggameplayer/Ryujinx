@@ -361,41 +361,6 @@ namespace Ryujinx.HLE.Gpu.Texture
             return Output;
         }
         
-        private unsafe static byte[] Read16Bpt5x5(IAMemory Memory, TextureInfo Texture)
-        {
-            int Width  = (Texture.Width  + 4) / 5;
-            int Height = (Texture.Height + 4) / 5;
-
-            byte[] Output = new byte[Width * Height * 16];
-
-            ISwizzle Swizzle = TextureHelper.GetSwizzle(Texture, Width, 16);
-
-            (AMemory CpuMem, long Position) = TextureHelper.GetMemoryAndPosition(
-                Memory,
-                Texture.Position);
-
-            fixed (byte* BuffPtr = Output)
-            {
-                long OutOffs = 0;
-
-                for (int Y = 0; Y < Height; Y++)
-                for (int X = 0; X < Width;  X++)
-                {
-                    long Offset = (uint)Swizzle.GetSwizzleOffset(X, Y);
-
-                    long Tile0 = CpuMem.ReadInt64Unchecked(Position + Offset + 0);
-                    long Tile1 = CpuMem.ReadInt64Unchecked(Position + Offset + 8);
-
-                    *(long*)(BuffPtr + OutOffs + 0) = Tile0;
-                    *(long*)(BuffPtr + OutOffs + 8) = Tile1;
-
-                    OutOffs += 16;
-                }
-            }
-
-            return Output;
-        }
-        
         private unsafe static byte[] Read16Bpt6x6(IAMemory Memory, TextureInfo Texture)
         {
             int Width  = (Texture.Width  + 5) / 6;
