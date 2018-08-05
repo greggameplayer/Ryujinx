@@ -1,6 +1,7 @@
 using Ryujinx.HLE.Loaders.Executables;
 using Ryujinx.HLE.Loaders.Npdm;
 using Ryujinx.HLE.Logging;
+using Ryujinx.HLE.OsHle.Font;
 using Ryujinx.HLE.OsHle.Handles;
 using System;
 using System.Collections.Concurrent;
@@ -24,6 +25,8 @@ namespace Ryujinx.HLE.OsHle
         internal KSharedMemory HidSharedMem  { get; private set; }
         internal KSharedMemory FontSharedMem { get; private set; }
 
+        internal SharedFontManager Font { get; private set; }
+
         internal KEvent VsyncEvent { get; private set; }
 		internal KEvent NpadStyleSetUpdateEvent { get; private set; }
 
@@ -45,6 +48,8 @@ namespace Ryujinx.HLE.OsHle
 
             HidSharedMem  = new KSharedMemory(HidPA, HidSize);
             FontSharedMem = new KSharedMemory(FontPA, FontSize);
+
+            Font = new SharedFontManager(Ns, FontSharedMem.PA);
 
             VsyncEvent = new KEvent();
 			NpadStyleSetUpdateEvent = new KEvent();
