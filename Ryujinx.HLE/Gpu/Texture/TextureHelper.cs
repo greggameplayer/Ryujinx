@@ -53,6 +53,7 @@ namespace Ryujinx.HLE.Gpu.Texture
                 case GalTextureFormat.B5G6R5:
                 case GalTextureFormat.G8R8:
                 case GalTextureFormat.R16:
+                case GalTextureFormat.Z16:
                     return Texture.Width * Texture.Height * 2;
 
                 case GalTextureFormat.R8:

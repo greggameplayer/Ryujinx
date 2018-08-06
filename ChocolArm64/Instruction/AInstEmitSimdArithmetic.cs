@@ -1344,10 +1344,6 @@ namespace ChocolArm64.Instruction
             });
 		}
 		
-        public static void Usubw_V(AILEmitterCtx Context) 
-        { 
-            EmitVectorWidenRmBinaryOpZx(Context, () => Context.Emit(OpCodes.Sub)); 
-        } 
         public static void Usqadd_S(AILEmitterCtx Context)
         {
             EmitScalarSaturatingBinaryOpZx(Context, SaturatingFlags.Accumulate);

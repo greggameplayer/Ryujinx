@@ -1,6 +1,5 @@
 using Ryujinx.Audio;
 using Ryujinx.Graphics.Gal;
-using Ryujinx.HLE.Font;
 using Ryujinx.HLE.Gpu;
 using Ryujinx.HLE.Input;
 using Ryujinx.HLE.Logging;
@@ -30,8 +29,6 @@ namespace Ryujinx.HLE
         public PerformanceStatistics Statistics { get; private set; }
 
         public Hid Hid { get; private set; }
-
-        public SharedFontManager Font { get; private set; }
 
         public event EventHandler Finish;
 
