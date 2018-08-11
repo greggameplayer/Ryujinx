@@ -61,7 +61,7 @@ namespace Ryujinx.Graphics.Gal.OpenGL
             //These values match OpenGL's defaults
             Old = new GalPipelineState
             {
-                FrontFace = GalFrontFace.CCW,
+                FrontFace = GalFrontFace.Ccw,
 
                 CullFaceEnabled = false,
                 CullFace = GalCullFace.Back,

@@ -1048,29 +1048,6 @@ namespace ChocolArm64.Instruction
         {
             EmitVectorWidenRnRmBinaryOpSx(Context, () => Context.Emit(OpCodes.Mul));
         }
-        
-        public static void Sqdmulh_V(AILEmitterCtx Context)
-        {
-            AOpCodeSimdReg Op = (AOpCodeSimdReg)Context.CurrOp;
-                
-            int SizeF = Op.Size & 1;
-               
-            EmitVectorWidenRnRmBinaryOpSx(Context, () =>
-            {
-                Context.Emit(OpCodes.Mul);
-
-                if (SizeF == 0)
-                {
-                    Context.EmitLdc_R4(2);
-                }
-                else /* if (SizeF == 1) */
-                {
-                    Context.EmitLdc_R8(2);
-                }
-    
-                Context.Emit(OpCodes.Mul);
-            }); 
-        }
 
         public static void Sqabs_S(AILEmitterCtx Context)
         {
