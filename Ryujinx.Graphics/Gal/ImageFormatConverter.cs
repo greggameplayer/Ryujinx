@@ -40,6 +40,7 @@ namespace Ryujinx.Graphics.Gal
                         case GalTextureFormat.R16G16B16A16: return GalImageFormat.R16G16B16A16_UNORM;
                         case GalTextureFormat.A8B8G8R8:     return GalImageFormat.A8B8G8R8_UNORM_PACK32;
                         case GalTextureFormat.A2B10G10R10:  return GalImageFormat.A2B10G10R10_UNORM_PACK32;
+                        case GalTextureFormat.A4B4G4R4:     return GalImageFormat.R4G4B4A4_UNORM_PACK16_REVERSED;
                         case GalTextureFormat.A1B5G5R5:     return GalImageFormat.A1R5G5B5_UNORM_PACK16;
                         case GalTextureFormat.B5G6R5:       return GalImageFormat.B5G6R5_UNORM_PACK16;
                         case GalTextureFormat.BC7U:         return GalImageFormat.BC7_UNORM_BLOCK;
@@ -120,7 +121,7 @@ namespace Ryujinx.Graphics.Gal
                     break;
             }
 
-            throw new NotImplementedException(Format.ToString() + " " + Type.ToString());
+            throw new NotImplementedException("0x" + Format.ToString("x2") + " " + Type.ToString());
         }
 
         public static GalImageFormat ConvertFrameBuffer(GalFrameBufferFormat Format)
@@ -221,6 +222,7 @@ namespace Ryujinx.Graphics.Gal
                 case GalImageFormat.ASTC_8x5_UNORM_BLOCK:
                 case GalImageFormat.ASTC_10x5_UNORM_BLOCK:
                 case GalImageFormat.ASTC_10x6_UNORM_BLOCK:
+                case GalImageFormat.R4G4B4A4_UNORM_PACK16_REVERSED:
                     return true;
 
                 case GalImageFormat.D24_UNORM_S8_UINT:
