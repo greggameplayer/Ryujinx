@@ -160,6 +160,8 @@ namespace Ryujinx.HLE.HOS
             LoadNso("subsdk*");
             LoadNso("sdk");
 
+            ContentManager.LoadEntries();
+
             MainProcess.Run();
         }
 
@@ -430,6 +432,8 @@ namespace Ryujinx.HLE.HOS
             LoadNso("subsdk");
             LoadNso("sdk");
 
+            ContentManager.LoadEntries();
+
             MainProcess.Run();
         }
 
@@ -467,6 +471,9 @@ namespace Ryujinx.HLE.HOS
             }
 
             MainProcess.SetEmptyArgs();
+
+            ContentManager.LoadEntries();
+
             MainProcess.Run(IsNro);
         }
 
