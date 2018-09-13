@@ -1,5 +1,6 @@
 using LibHac;
 using Ryujinx.HLE.FileSystem;
+using Ryujinx.HLE.FileSystem.Content;
 using Ryujinx.HLE.HOS.Ipc;
 using Ryujinx.HLE.Utilities;
 using System.Collections.Generic;
@@ -49,15 +50,24 @@ namespace Ryujinx.HLE.HOS.Services.FspSrv
                 string InstallPath =
                     Context.Device.System.ContentManager.GetInstalledPath(TitleId, ContentType.AocData);
 
+                NcaId NcaId = Context.Device.System.ContentManager.GetInstalledNcaId(TitleId, ContentType.AocData);
+
                 if (string.IsNullOrWhiteSpace(InstallPath))
                 {
                     InstallPath = 
                         Context.Device.System.ContentManager.GetInstalledPath(TitleId, ContentType.Data);
                 }
 
+                if(NcaId == null)
+                {
+                    NcaId = Context.Device.System.ContentManager.GetInstalledNcaId(TitleId, ContentType.Data);
+                }
+
                 if (!string.IsNullOrWhiteSpace(InstallPath))
                 {
-                    string NcaPath = Path.Combine(InstallPath, "00");
+
+
+                    string NcaPath = Path.Combine(InstallPath, NcaId.ToString() + ".nca", "00");
 
                     if (File.Exists(NcaPath))
                     {
