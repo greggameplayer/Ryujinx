@@ -5,6 +5,7 @@ using Ryujinx.HLE.HOS.SystemState;
 using Ryujinx.HLE.Loaders.Executables;
 using Ryujinx.HLE.Loaders.Npdm;
 using Ryujinx.HLE.Logging;
+using Ryujinx.HLE.FileSystem.Content;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -40,6 +41,8 @@ namespace Ryujinx.HLE.HOS
         internal KSharedMemory FontSharedMem { get; private set; }
 
         internal SharedFontManager Font { get; private set; }
+
+        public ContentManager ContentManager { get; private set; }
 
         internal KEvent VsyncEvent { get; private set; }
 
@@ -89,6 +92,8 @@ namespace Ryujinx.HLE.HOS
             VsyncEvent = new KEvent(this);
 
             LoadKeySet();
+
+            ContentManager = new ContentManager(Device);
         }
 
         public void LoadCart(string ExeFsDir, string RomFsFile = null)
@@ -172,6 +177,33 @@ namespace Ryujinx.HLE.HOS
 
                 return;
             }
+
+            ContentManager.LoadEntries();
+
+            if (State.InstallContents)
+            {
+                if (Xci.UpdatePartition != null)
+                {
+                    foreach (PfsFileEntry FileEntry in Xci.UpdatePartition.Files.Where(x => x.Name.EndsWith(".nca")))
+                    {
+                        using (Stream NcaStream = Xci.UpdatePartition.OpenFile(FileEntry))
+                        {
+                            try
+                            {
+                                Nca ContentNca = new Nca(KeySet, NcaStream, false);
+
+                                ContentManager.InstallContent(ContentNca, FileEntry.Name);
+                            }
+                            catch (InvalidDataException ex)
+                            {
+
+                            }
+                        }
+                    }
+                }
+            }
+
+            ContentManager.LoadEntries();
 
             LoadNca(MainNca, ControlNca);
         }
