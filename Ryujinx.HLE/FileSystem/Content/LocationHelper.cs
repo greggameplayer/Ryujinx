@@ -46,6 +46,21 @@ namespace Ryujinx.HLE.FileSystem.Content
             }
         }
 
+        public static string GetContentPath(StorageId StorageId)
+        {
+            switch (StorageId)
+            {
+                case StorageId.NandSystem:
+                    return ContentPath.SystemContent;
+                case StorageId.NandUser:
+                    return ContentPath.UserContent;
+                case StorageId.SdCard:
+                    return ContentPath.SdCardContent;
+                default:
+                    throw new NotSupportedException($"Storage Id `{StorageId}` is not supported.");
+            }
+        }
+
         public static StorageId GetStorageId(string ContentPathString)
         {
             switch (ContentPathString)

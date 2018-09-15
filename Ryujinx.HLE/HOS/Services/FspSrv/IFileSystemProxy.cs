@@ -43,19 +43,26 @@ namespace Ryujinx.HLE.HOS.Services.FspSrv
 
             long TitleId = Context.RequestData.ReadInt64();
 
-            StorageId InstalledStorage = Context.Device.System.ContentManager.GetInstalledStorage(TitleId);
+            StorageId InstalledStorage =
+                Context.Device.System.ContentManager.GetInstalledStorage(TitleId, ContentType.Data, StorageId);
 
-            if (InstalledStorage == StorageId)
+            if(InstalledStorage == StorageId.None)
+            {
+                InstalledStorage =
+                    Context.Device.System.ContentManager.GetInstalledStorage(TitleId, ContentType.AocData, StorageId);
+            }
+
+            if (InstalledStorage!= StorageId.None)
             {
                 string InstallPath =
-                    Context.Device.System.ContentManager.GetInstalledPath(TitleId, ContentType.AocData);
+                    Context.Device.System.ContentManager.GetInstalledPath(TitleId, ContentType.AocData, StorageId);
 
                 NcaId NcaId = Context.Device.System.ContentManager.GetInstalledNcaId(TitleId, ContentType.AocData);
 
                 if (string.IsNullOrWhiteSpace(InstallPath))
                 {
                     InstallPath = 
-                        Context.Device.System.ContentManager.GetInstalledPath(TitleId, ContentType.Data);
+                        Context.Device.System.ContentManager.GetInstalledPath(TitleId, ContentType.Data, StorageId);
                 }
 
                 if(NcaId == null)

@@ -5,6 +5,7 @@ using Ryujinx.HLE.HOS.SystemState;
 using Ryujinx.HLE.Loaders.Executables;
 using Ryujinx.HLE.Loaders.Npdm;
 using Ryujinx.HLE.Logging;
+using Ryujinx.HLE.FileSystem;
 using Ryujinx.HLE.FileSystem.Content;
 using System;
 using System.Collections.Concurrent;
@@ -194,7 +195,7 @@ namespace Ryujinx.HLE.HOS
                             {
                                 Nca ContentNca = new Nca(KeySet, NcaStream, false);
 
-                                ContentManager.InstallContent(ContentNca, FileEntry.Name);
+                                ContentManager.InstallContent(ContentNca, FileEntry.Name, StorageId.NandSystem);
                             }
                             catch (InvalidDataException ex)
                             {

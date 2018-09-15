@@ -1,15 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using LibHac;
 
 namespace Ryujinx.HLE.FileSystem.Content
 {
-    public class LocationEntry
+    public struct LocationEntry
     {
-        public LocationEntry PreviousEntry;
-        public LocationEntry NextEntry;
-        public string        ContentPath;
-        public int           Flag;
-        public long          TitleId;
+        public string      ContentPath { get; private set; }
+        public int         Flag        { get; private set; }
+        public long        TitleId     { get; private set; }
+        public ContentType ContentType { get; private set; }
+
+        public LocationEntry(string ContentPath, int Flag, long TitleId, ContentType ContentType)
+        {
+            this.ContentPath = ContentPath;
+            this.Flag        = Flag;
+            this.TitleId     = TitleId;
+            this.ContentType = ContentType;
+        }
+
+        public void SetFlag(int Flag)
+        {
+            this.Flag = Flag;
+        }
     }
 }

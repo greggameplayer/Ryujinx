@@ -11,7 +11,7 @@ namespace Ryujinx.HLE.FileSystem.Content
 {
     internal class ContentManager
     {
-        public LocationEntry FirstLocationEntry { get; private set; }
+        Dictionary<StorageId,LinkedList<LocationEntry>> LocationEntries { get; set; }
 
         public SortedDictionary<(ulong,ContentType),string> ContentDictionary { get; private set; }
 
@@ -23,125 +23,126 @@ namespace Ryujinx.HLE.FileSystem.Content
         {
             ContentDictionary = new SortedDictionary<(ulong, ContentType), string>();
 
+            LocationEntries = new Dictionary<StorageId, LinkedList<LocationEntry>>();
+
             this.Device = Device;
         }
 
         public void LoadEntries()
         {
-            string SystemContentPath = LocationHelper.GetRealPath(Device.FileSystem, ContentPath.SystemContent);
-
-            Directory.CreateDirectory(SystemContentPath);
-
-            FirstLocationEntry = null;
-
-            LocationEntry PreviousEntry = null;
-
-            ContentDictionary = new SortedDictionary<(ulong, ContentType), string>();
-
-            foreach(string DirectoryPath in Directory.EnumerateDirectories(SystemContentPath))
+            foreach (StorageId StorageId in Enum.GetValues(typeof(StorageId)))
             {
-                if (Directory.GetFiles(DirectoryPath).Length > 0)
+                string ContentPath = null;
+
+                try
                 {
-                    string NcaName = new DirectoryInfo(DirectoryPath).Name;
+                    string ContentPathString = LocationHelper.GetContentPath(StorageId);
 
-                    using (FileStream NcaFile = new FileStream(Directory.GetFiles(DirectoryPath)[0], FileMode.Open, FileAccess.Read))
+                    ContentPath = LocationHelper.GetRealPath(Device.FileSystem, ContentPathString);
+                }
+                catch (NotSupportedException NEx)
+                {
+                    continue;
+                }
+
+                Directory.CreateDirectory(ContentPath);
+
+                LinkedList<LocationEntry> LocationList = new LinkedList<LocationEntry>();
+
+                ContentDictionary = new SortedDictionary<(ulong, ContentType), string>();
+
+                List<long> ReadTitleIds = new List<long>();
+
+                void AddEntry(LocationEntry Entry)
+                {
+                    if (!ReadTitleIds.Contains(Entry.TitleId))
                     {
+                        LocationList.AddLast(Entry);
 
-                        Nca Nca = new Nca(Device.System.KeySet, NcaFile, false);
-
-                        LocationEntry Entry = new LocationEntry()
-                        {
-                            ContentPath = ContentPath.SystemContent,
-                            Flag = 0,
-                            PreviousEntry = PreviousEntry,
-                            TitleId = (long)Nca.Header.TitleId,
-                        };
-
-                        if (PreviousEntry == null)
-                        {
-                            FirstLocationEntry = Entry;
-                        }
-                        else
-                        {
-                            PreviousEntry.NextEntry = Entry;
-                        }
-
-                        PreviousEntry = Entry;
-
-                        ContentDictionary.Add((Nca.Header.TitleId,Nca.Header.ContentType), NcaName);
-
-                        NcaFile.Close();
-
-                        Nca.Dispose();
-
-                        NcaFile.Dispose();
+                        ReadTitleIds.Add(Entry.TitleId);
                     }
                 }
-            }
 
-            foreach(string FilePath in Directory.EnumerateFiles(SystemContentPath))
-            {
-                if (Path.GetExtension(FilePath) == ".nca")
+                foreach (string DirectoryPath in Directory.EnumerateDirectories(ContentPath))
                 {
-                    string NcaName = Path.GetFileName(FilePath);
-
-                    using (FileStream NcaFile = new FileStream(FilePath, FileMode.Open, FileAccess.Read))
+                    if (Directory.GetFiles(DirectoryPath).Length > 0)
                     {
-                        Nca Nca = new Nca(Device.System.KeySet, NcaFile, false);
+                        string NcaName = new DirectoryInfo(DirectoryPath).Name;
 
-                        LocationEntry Entry = new LocationEntry()
+                        using (FileStream NcaFile = new FileStream(Directory.GetFiles(DirectoryPath)[0], FileMode.Open, FileAccess.Read))
                         {
-                            ContentPath = ContentPath.SystemContent,
-                            Flag = 0,
-                            PreviousEntry = PreviousEntry,
-                            TitleId = (long)Nca.Header.TitleId,
-                        };
 
-                        if (PreviousEntry == null)
-                        {
-                            FirstLocationEntry = Entry;
+                            Nca Nca = new Nca(Device.System.KeySet, NcaFile, false);
+
+                            LocationEntry Entry = new LocationEntry(ContentPath,
+                                0,
+                                (long)Nca.Header.TitleId,
+                                Nca.Header.ContentType);
+                            
+
+                            AddEntry(Entry);
+
+                            ContentDictionary.Add((Nca.Header.TitleId, Nca.Header.ContentType), NcaName);
+
+                            NcaFile.Close();
+
+                            Nca.Dispose();
+
+                            NcaFile.Dispose();
                         }
-                        else
-                        {
-                            PreviousEntry.NextEntry = Entry;
-                        }
-
-                        PreviousEntry = Entry;
-
-                        ContentDictionary.Add((Nca.Header.TitleId, Nca.Header.ContentType), NcaName);
-
-                        NcaFile.Close();
-
-                        Nca.Dispose();
-
-                        NcaFile.Dispose();
                     }
                 }
+
+                foreach (string FilePath in Directory.EnumerateFiles(ContentPath))
+                {
+                    if (Path.GetExtension(FilePath) == ".nca")
+                    {
+                        string NcaName = Path.GetFileName(FilePath);
+
+                        using (FileStream NcaFile = new FileStream(FilePath, FileMode.Open, FileAccess.Read))
+                        {
+                            Nca Nca = new Nca(Device.System.KeySet, NcaFile, false);
+
+                            LocationEntry Entry = new LocationEntry(ContentPath,
+                                0,
+                                (long)Nca.Header.TitleId,
+                                Nca.Header.ContentType);
+
+                            AddEntry(Entry);
+
+                            ContentDictionary.Add((Nca.Header.TitleId, Nca.Header.ContentType), NcaName);
+
+                            NcaFile.Close();
+
+                            Nca.Dispose();
+
+                            NcaFile.Dispose();
+                        }
+                    }
+                }
+
+                LocationEntries.Add(StorageId, LocationList);
             }
         }
 
-        public void RefreshEntries()
+        public void ClearEntry(long TitleId, ContentType ContentType,StorageId StorageId)
         {
-            LocationEntry LocationEntry = FirstLocationEntry;
+            RemoveLocationEntry(TitleId, ContentType, StorageId);
+        }
+
+        public void RefreshEntries(StorageId StorageId, int Flag)
+        {
+            LinkedList<LocationEntry> LocationList = LocationEntries[StorageId];
+
+            LinkedListNode<LocationEntry> LocationEntry = LocationList.First;
 
             while (LocationEntry != null)
             {
-                LocationEntry NextLocationEntry = LocationEntry.NextEntry;
+                LinkedListNode<LocationEntry> NextLocationEntry = LocationEntry.Next;
 
-                if (LocationEntry.Flag == 0)
+                if (LocationEntry.Value.Flag == Flag)
                 {
-                    if (LocationEntry.PreviousEntry == null)
-                    {
-                        FirstLocationEntry = NextLocationEntry;
-
-                        NextLocationEntry.PreviousEntry = null;
-                    }
-                    else
-                    {
-                        LocationEntry.PreviousEntry.NextEntry = NextLocationEntry;
-
-                        NextLocationEntry.PreviousEntry = LocationEntry.PreviousEntry;
-                    }
+                    LocationList.Remove(LocationEntry.Value);
                 }
 
                 LocationEntry = NextLocationEntry;
@@ -153,7 +154,7 @@ namespace Ryujinx.HLE.FileSystem.Content
             LocationEntry LocationEntry = GetLocation(TitleId);
         }*/
 
-        public void InstallContent(string NcaPath)
+        public void InstallContent(string NcaPath, StorageId StorageId)
         {
             if (File.Exists(NcaPath))
             {
@@ -163,7 +164,7 @@ namespace Ryujinx.HLE.FileSystem.Content
 
                 string Filename = Path.GetFileName(NcaPath);
 
-                InstallContent(Nca, Filename);
+                InstallContent(Nca, Filename, StorageId);
 
                 NcaStream.Close();
 
@@ -173,11 +174,11 @@ namespace Ryujinx.HLE.FileSystem.Content
             }
         }
 
-        public void InstallContent(Nca Nca, string Filename)
+        public void InstallContent(Nca Nca, string Filename, StorageId StorageId)
         {
             if (Nca.Header.Distribution == DistributionType.Download)
             {
-                string ContentStoragePath = LocationHelper.GetContentPath(ContentStorageId.NandSystem);
+                string ContentStoragePath = LocationHelper.GetContentPath(StorageId);
 
                 string RealContentPath = LocationHelper.GetRealPath(Device.FileSystem, ContentStoragePath);
 
@@ -204,7 +205,7 @@ namespace Ryujinx.HLE.FileSystem.Content
 
                 if (ContentDictionary.ContainsKey((Nca.Header.TitleId, Nca.Header.ContentType)))
                 {
-                    string InstalledPath = GetInstalledPath((long)Nca.Header.TitleId, Nca.Header.ContentType);
+                    string InstalledPath = GetInstalledPath((long)Nca.Header.TitleId, Nca.Header.ContentType, StorageId);
 
                     if (File.Exists(InstalledPath))
                     {
@@ -246,37 +247,117 @@ namespace Ryujinx.HLE.FileSystem.Content
             return null;
         }
 
-        public string GetInstalledPath(long TitleId, ContentType ContentType)
+        public string GetInstalledPath(long TitleId, ContentType ContentType, StorageId StorageId)
         {
-            LocationEntry LocationEntry = GetLocation(TitleId);
+            LocationEntry LocationEntry = GetLocation(TitleId, ContentType, StorageId);
 
             string ContentPath = LocationHelper.GetRealPath(Device.FileSystem, LocationEntry.ContentPath);
 
             return Path.Combine(ContentPath, ContentDictionary[((ulong)TitleId, ContentType)]);
         }
 
-        public StorageId GetInstalledStorage(long TitleId)
+        public StorageId GetInstalledStorage(long TitleId, ContentType ContentType, StorageId StorageId)
         {
-            LocationEntry LocationEntry = GetLocation(TitleId);
+            LocationEntry LocationEntry = GetLocation(TitleId, ContentType, StorageId);
 
-            return LocationEntry != null ? LocationHelper.GetStorageId(LocationEntry.ContentPath) : StorageId.None;
+            return LocationEntry.ContentPath != null ?
+                LocationHelper.GetStorageId(LocationEntry.ContentPath) : StorageId.None;
         }
 
-        private LocationEntry GetLocation(long TitleId)
+        public string GetInstalledContentStorage(long TitleId, StorageId StorageId, ContentType ContentType)
         {
-            LocationEntry CurrentLocationEntry = FirstLocationEntry;
+            LocationEntry LocationEntry = GetLocation(TitleId, ContentType, StorageId);
 
-            while (CurrentLocationEntry != null)
+            if(VerifyContentType(LocationEntry,ContentType))
             {
-                if(CurrentLocationEntry.TitleId == TitleId)
-                {
-                    return CurrentLocationEntry;
-                }
-
-                CurrentLocationEntry = CurrentLocationEntry.NextEntry;
+                return LocationEntry.ContentPath;
             }
 
-            return CurrentLocationEntry;
+            return string.Empty;
+        }
+
+        public void RedirectLocation(LocationEntry NewEntry, StorageId StorageId)
+        {
+            LocationEntry LocationEntry = GetLocation(NewEntry.TitleId, NewEntry.ContentType, StorageId);
+
+            if (LocationEntry.ContentPath != null)
+            {
+                RemoveLocationEntry(NewEntry.TitleId, NewEntry.ContentType, StorageId);
+            }
+
+            AddLocationEntry(NewEntry, StorageId);
+        }
+
+        private bool VerifyContentType(LocationEntry LocationEntry, ContentType ContentType)
+        {
+            StorageId StorageId = LocationHelper.GetStorageId(LocationEntry.ContentPath);
+
+            string InstalledPath = GetInstalledPath(LocationEntry.TitleId, ContentType, StorageId);
+
+            if (!string.IsNullOrWhiteSpace(InstalledPath))
+            {
+                string NcaPath = Path.Combine(InstalledPath, "00");
+
+                if (File.Exists(NcaPath))
+                {
+                    FileStream File = new FileStream(NcaPath, FileMode.Open, FileAccess.Read);
+
+                    Nca Nca = new Nca(Device.System.KeySet, File, false);
+
+                    return Nca.Header.ContentType == ContentType;
+                }
+            }
+
+            return false;
+        }
+
+        private void AddLocationEntry(LocationEntry Entry, StorageId StorageId)
+        {
+            LinkedList<LocationEntry> LocationList = null;
+
+            if (LocationEntries.ContainsKey(StorageId))
+            {
+                LocationList = LocationEntries[StorageId];
+            }
+
+            if (LocationList != null)
+            {
+                if (LocationList.Contains(Entry))
+                {
+                    LocationList.Remove(Entry);
+                }
+
+                LocationList.AddLast(Entry);
+            }
+        }
+
+        private void RemoveLocationEntry(long TitleId, ContentType ContentType, StorageId StorageId)
+        {
+            LinkedList<LocationEntry> LocationList = null;
+
+            if (LocationEntries.ContainsKey(StorageId))
+            {
+                LocationList = LocationEntries[StorageId];
+            }
+
+            if (LocationList != null)
+            {
+                LocationEntry Entry =
+                    LocationList.ToList().Find(x => x.TitleId == TitleId && x.ContentType == ContentType);
+
+
+                if (Entry.ContentPath != null)
+                {
+                    LocationList.Remove(Entry);
+                }
+            }
+        }
+
+        private LocationEntry GetLocation(long TitleId, ContentType ContentType,StorageId StorageId)
+        {
+            LinkedList<LocationEntry> LocationList = LocationEntries[StorageId];
+
+            return LocationList.ToList().Find(x => x.TitleId == TitleId && x.ContentType == ContentType);
         }
     }
 }
