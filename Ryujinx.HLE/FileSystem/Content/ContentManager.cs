@@ -30,40 +30,42 @@ namespace Ryujinx.HLE.FileSystem.Content
 
         public void LoadEntries()
         {
+            ContentDictionary = new SortedDictionary<(ulong, ContentType), string>();
+
             foreach (StorageId StorageId in Enum.GetValues(typeof(StorageId)))
             {
-                string ContentPath = null;
+                string ContentInstallationDirectory = null;
+
+                string ContentPathString = null;
 
                 try
                 {
-                    string ContentPathString = LocationHelper.GetContentPath(StorageId);
+                    ContentPathString = LocationHelper.GetContentPath(StorageId);
 
-                    ContentPath = LocationHelper.GetRealPath(Device.FileSystem, ContentPathString);
+                    ContentInstallationDirectory = LocationHelper.GetRealPath(Device.FileSystem, ContentPathString);
                 }
                 catch (NotSupportedException NEx)
                 {
                     continue;
                 }
 
-                Directory.CreateDirectory(ContentPath);
+                Directory.CreateDirectory(ContentInstallationDirectory);
 
                 LinkedList<LocationEntry> LocationList = new LinkedList<LocationEntry>();
-
-                ContentDictionary = new SortedDictionary<(ulong, ContentType), string>();
 
                 List<long> ReadTitleIds = new List<long>();
 
                 void AddEntry(LocationEntry Entry)
                 {
+                    LocationList.AddLast(Entry);
+
                     if (!ReadTitleIds.Contains(Entry.TitleId))
                     {
-                        LocationList.AddLast(Entry);
-
                         ReadTitleIds.Add(Entry.TitleId);
                     }
                 }
 
-                foreach (string DirectoryPath in Directory.EnumerateDirectories(ContentPath))
+                foreach (string DirectoryPath in Directory.EnumerateDirectories(ContentInstallationDirectory))
                 {
                     if (Directory.GetFiles(DirectoryPath).Length > 0)
                     {
@@ -74,7 +76,7 @@ namespace Ryujinx.HLE.FileSystem.Content
 
                             Nca Nca = new Nca(Device.System.KeySet, NcaFile, false);
 
-                            LocationEntry Entry = new LocationEntry(ContentPath,
+                            LocationEntry Entry = new LocationEntry(ContentPathString,
                                 0,
                                 (long)Nca.Header.TitleId,
                                 Nca.Header.ContentType);
@@ -93,7 +95,7 @@ namespace Ryujinx.HLE.FileSystem.Content
                     }
                 }
 
-                foreach (string FilePath in Directory.EnumerateFiles(ContentPath))
+                foreach (string FilePath in Directory.EnumerateFiles(ContentInstallationDirectory))
                 {
                     if (Path.GetExtension(FilePath) == ".nca")
                     {
@@ -103,7 +105,7 @@ namespace Ryujinx.HLE.FileSystem.Content
                         {
                             Nca Nca = new Nca(Device.System.KeySet, NcaFile, false);
 
-                            LocationEntry Entry = new LocationEntry(ContentPath,
+                            LocationEntry Entry = new LocationEntry(ContentPathString,
                                 0,
                                 (long)Nca.Header.TitleId,
                                 Nca.Header.ContentType);
