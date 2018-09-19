@@ -137,13 +137,11 @@ namespace Ryujinx.HLE.HOS.Services.FspSrv
             if (Directory.Exists(Name))
             {
                 DirectoryInterface = new IDirectory(Name, FilterFlags, this);
-            }
-            else
-            {
-                return (int)MakeError(ErrorModule.Fs, FsErr.PathDoesNotExist);
+
+                return 0;
             }
 
-            return 0;
+            return (int)MakeError(ErrorModule.Fs, FsErr.PathDoesNotExist);
         }
 
         public int OpenFile(string Name, out IFile FileInterface)
@@ -155,13 +153,11 @@ namespace Ryujinx.HLE.HOS.Services.FspSrv
                 FileStream Stream = new FileStream(Name, FileMode.Open);
 
                 FileInterface = new IFile(Stream, Name);
-            }
-            else
-            {
-                return (int)MakeError(ErrorModule.Fs, FsErr.PathDoesNotExist);
+
+                return 0;
             }
 
-            return 0;
+            return (int)MakeError(ErrorModule.Fs, FsErr.PathDoesNotExist);
         }
 
         public int RenameDirectory(string OldName, string NewName)

@@ -9,6 +9,7 @@ namespace Ryujinx.HLE.FileSystem.Content
         public const string SystemContent    = "@SystemContent";
         public const string UserContent      = "@UserContent";
         public const string SdCardContent    = "@SdCardContent";
+        public const string SdCard           = "@SdCard";
         public const string CalibFile        = "@CalibFile";
         public const string Safe             = "@Safe";
         public const string User             = "@User";

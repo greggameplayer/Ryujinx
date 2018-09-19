@@ -44,7 +44,26 @@ namespace Ryujinx.HLE.HOS.Services.FspSrv
 
             string Path = ReadUtf8String(Context);
 
-            return 0;
+            string FullPath = Context.Device.FileSystem.SwitchPathToSystemPath(Path);
+
+            FileStream FileStream = new FileStream(FullPath, FileMode.Open, FileAccess.Read);
+
+            Nca Nca = new Nca(Context.Device.System.KeySet, FileStream, false);
+
+            NcaSection RomfsSection = Nca.Sections.FirstOrDefault(x => x?.Type == SectionType.Romfs);
+
+            if (RomfsSection != null)
+            {
+                Stream RomfsStream = Nca.OpenSection(RomfsSection.SectionNum, false);
+
+                IFileSystem NcaFileSystem = new IFileSystem(Path, new RomFileSystemProvider(RomfsStream));
+
+                MakeObject(Context, NcaFileSystem);
+
+                return 0;
+            }
+
+            return MakeError(ErrorModule.Fs, FsErr.InvalidInput);
         }
 
         private long OpenDataStorageByDataId(ServiceCtx Context)

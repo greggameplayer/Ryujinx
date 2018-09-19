@@ -1,3 +1,4 @@
+using Ryujinx.HLE.FileSystem.Content;
 using Ryujinx.HLE.HOS;
 using System;
 using System.IO;
@@ -100,6 +101,31 @@ namespace Ryujinx.HLE.FileSystem
 
         private string MakeDirAndGetFullPath(string Dir)
         {
+            // Handles Common Switch Content Paths
+
+            switch (Dir)
+            {
+                case ContentPath.SdCard:
+                case "@Sdcard":
+                    Dir = SdCardPath;
+                    break;
+                case ContentPath.User:
+                    Dir = UserNandPath;
+                    break;
+                case ContentPath.System:
+                    Dir = SystemNandPath;
+                    break;
+                case ContentPath.SdCardContent:
+                    Dir = Path.Combine(SdCardPath,"Nintendo","Contents");
+                    break;
+                case ContentPath.UserContent:
+                    Dir = Path.Combine(UserNandPath, "Contents");
+                    break;
+                case ContentPath.SystemContent:
+                    Dir = Path.Combine(SystemNandPath, "Contents");
+                    break;
+            }
+
             string FullPath = Path.Combine(GetBasePath(), Dir);
 
             if (!Directory.Exists(FullPath))
