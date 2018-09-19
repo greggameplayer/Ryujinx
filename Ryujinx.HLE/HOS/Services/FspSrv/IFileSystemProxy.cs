@@ -25,6 +25,7 @@ namespace Ryujinx.HLE.HOS.Services.FspSrv
             {
                 { 1,    SetCurrentProcess                        },
                 { 11,   OpenBisFileSystem                        },
+                { 8,    OpenFileSystemWithId                     },
                 { 18,   OpenSdCardFileSystem                     },
                 { 51,   OpenSaveDataFileSystem                   },
                 { 52,   OpenSaveDataFileSystemBySystemSaveDataId },
@@ -33,6 +34,17 @@ namespace Ryujinx.HLE.HOS.Services.FspSrv
                 { 203,  OpenPatchDataStorageByCurrentProcess     },
                 { 1005, GetGlobalAccessLogMode                   }
             };
+        }
+
+        private long OpenFileSystemWithId(ServiceCtx Context)
+        {
+            FileSystemType FileSystemType = (FileSystemType)Context.RequestData.ReadInt32();
+
+            long TitleId = Context.RequestData.ReadInt64();
+
+            string Path = ReadUtf8String(Context);
+
+            return 0;
         }
 
         private long OpenDataStorageByDataId(ServiceCtx Context)
