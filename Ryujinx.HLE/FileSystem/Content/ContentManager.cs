@@ -11,7 +11,9 @@ namespace Ryujinx.HLE.FileSystem.Content
 {
     internal class ContentManager
     {
-        Dictionary<StorageId,LinkedList<LocationEntry>> LocationEntries { get; set; }
+        private Dictionary<StorageId, LinkedList<LocationEntry>> LocationEntries;
+
+        public Dictionary<string, long> SharedFontContentDictionary { get; private set; }
 
         public SortedDictionary<(ulong,ContentType),string> ContentDictionary { get; private set; }
 
@@ -24,6 +26,15 @@ namespace Ryujinx.HLE.FileSystem.Content
             ContentDictionary = new SortedDictionary<(ulong, ContentType), string>();
 
             LocationEntries = new Dictionary<StorageId, LinkedList<LocationEntry>>();
+
+            SharedFontContentDictionary = new Dictionary<string, long>()
+            {
+                {"FontStandard",            0x0100000000000811 },
+                {"FontChineseSimplified",   0x0100000000000814 },
+                { "FontKorean",             0x0100000000000812 },
+                { "FontChineseTraditional", 0x0100000000000813 },
+                {"FontNintendoExtended" ,   0x010000000000081  },
+            };
 
             this.Device = Device;
         }
@@ -213,9 +224,9 @@ namespace Ryujinx.HLE.FileSystem.Content
                     {
                         File.Delete(InstalledPath);
                     }
-                    if (Directory.Exists(InstalledPath))
+                    if (Directory.Exists(Path.GetDirectoryName(InstalledPath)))
                     {
-                        Directory.Delete(InstalledPath, true);
+                        Directory.Delete(Path.GetDirectoryName(InstalledPath), true);
                     }
                 }
 
@@ -255,7 +266,7 @@ namespace Ryujinx.HLE.FileSystem.Content
 
             string ContentPath = LocationHelper.GetRealPath(Device.FileSystem, LocationEntry.ContentPath);
 
-            return Path.Combine(ContentPath, ContentDictionary[((ulong)TitleId, ContentType)]);
+            return Path.Combine(ContentPath, ContentDictionary[((ulong)TitleId, ContentType)],"00");
         }
 
         public StorageId GetInstalledStorage(long TitleId, ContentType ContentType, StorageId StorageId)
@@ -298,11 +309,9 @@ namespace Ryujinx.HLE.FileSystem.Content
 
             if (!string.IsNullOrWhiteSpace(InstalledPath))
             {
-                string NcaPath = Path.Combine(InstalledPath, "00");
-
-                if (File.Exists(NcaPath))
+                if (File.Exists(InstalledPath))
                 {
-                    FileStream File = new FileStream(NcaPath, FileMode.Open, FileAccess.Read);
+                    FileStream File = new FileStream(InstalledPath, FileMode.Open, FileAccess.Read);
 
                     Nca Nca = new Nca(Device.System.KeySet, File, false);
 

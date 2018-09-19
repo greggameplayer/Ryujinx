@@ -227,7 +227,7 @@ namespace Ryujinx.HLE.HOS.Services.Lr
             if (!string.IsNullOrWhiteSpace(ContentPath))
             {
                 long Position = Context.Request.RecvListBuff[0].Position;
-                long Size = Context.Request.RecvListBuff[0].Size;
+                long Size     = Context.Request.RecvListBuff[0].Size;
 
                 byte[] ContentPathBuffer = Encoding.UTF8.GetBytes(ContentPath);
 
