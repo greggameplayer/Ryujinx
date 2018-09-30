@@ -29,11 +29,12 @@ namespace Ryujinx.HLE.FileSystem.Content
 
             SharedFontContentDictionary = new Dictionary<string, long>()
             {
-                {"FontStandard",            0x0100000000000811 },
-                {"FontChineseSimplified",   0x0100000000000814 },
-                { "FontKorean",             0x0100000000000812 },
-                { "FontChineseTraditional", 0x0100000000000813 },
-                {"FontNintendoExtended" ,   0x010000000000081  },
+                {"FontStandard",                  0x0100000000000811 },
+                {"FontChineseSimplified",         0x0100000000000814 },
+                {"FontExtendedChineseSimplified", 0x0100000000000814 },
+                {"FontKorean",                    0x0100000000000812 },
+                {"FontChineseTraditional",        0x0100000000000813 },
+                {"FontNintendoExtended" ,         0x0100000000000810 },
             };
 
             this.Device = Device;

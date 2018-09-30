@@ -56,6 +56,14 @@ namespace Ryujinx.HLE.HOS.Font
 
                         if (!string.IsNullOrWhiteSpace(FontContentPath))
                         {
+                            int FileIndex = 0;
+
+                            //Use second file in Chinese Font title for standard
+                            if(Name == "FontChineseSimplified")
+                            {
+                                FileIndex = 1;
+                            }
+
                             FileStream NcaFileStream = new FileStream(FontContentPath, FileMode.Open, FileAccess.Read);
 
                             Nca Nca = new Nca(Device.System.KeySet, NcaFileStream, false);
@@ -64,7 +72,7 @@ namespace Ryujinx.HLE.HOS.Font
 
                             Romfs Romfs = new Romfs(Nca.OpenSection(RomfsSection.SectionNum, false));
 
-                            Stream FontFile = Romfs.OpenFile(Romfs.Files[0]);
+                            Stream FontFile = Romfs.OpenFile(Romfs.Files[FileIndex]);
 
                             byte[] Data = new byte[FontFile.Length];
 
