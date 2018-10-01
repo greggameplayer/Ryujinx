@@ -135,7 +135,15 @@ namespace Ryujinx.HLE.FileSystem.Content
                     }
                 }
 
-                LocationEntries.Add(StorageId, LocationList);
+                if(LocationEntries.ContainsKey(StorageId) && LocationEntries[StorageId]?.Count == 0)
+                {
+                    LocationEntries.Remove(StorageId);
+                }
+
+                if (!LocationEntries.ContainsKey(StorageId))
+                {
+                    LocationEntries.Add(StorageId, LocationList);
+                }
             }
         }
 
