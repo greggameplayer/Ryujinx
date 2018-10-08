@@ -5,6 +5,7 @@ using Ryujinx.Graphics.Gal.OpenGL;
 using Ryujinx.HLE;
 using System;
 using System.IO;
+using System.Linq;
 
 namespace Ryujinx
 {
