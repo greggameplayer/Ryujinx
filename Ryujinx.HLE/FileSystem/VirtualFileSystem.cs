@@ -73,6 +73,7 @@ namespace Ryujinx.HLE.FileSystem
         public string SwitchPathToSystemPath(string SwitchPath)
         {
             string[] Parts = SwitchPath.Split(":");
+
             if (Parts.Length != 2)
             {
                 return null;
@@ -83,10 +84,13 @@ namespace Ryujinx.HLE.FileSystem
         public string SystemPathToSwitchPath(string SystemPath)
         {
             string BaseSystemPath = GetBasePath() + Path.DirectorySeparatorChar;
+
             if (SystemPath.StartsWith(BaseSystemPath))
             {
                 string RawPath = SystemPath.Replace(BaseSystemPath, "");
+
                 int FirstSeparatorOffset = RawPath.IndexOf(Path.DirectorySeparatorChar);
+
                 if (FirstSeparatorOffset == -1)
                 {
                     return $"{RawPath}:/";
@@ -94,6 +98,7 @@ namespace Ryujinx.HLE.FileSystem
 
                 string BasePath = RawPath.Substring(0, FirstSeparatorOffset);
                 string FileName = RawPath.Substring(FirstSeparatorOffset + 1);
+
                 return $"{BasePath}:/{FileName}";
             }
             return null;
@@ -102,7 +107,6 @@ namespace Ryujinx.HLE.FileSystem
         private string MakeDirAndGetFullPath(string Dir)
         {
             // Handles Common Switch Content Paths
-
             switch (Dir)
             {
                 case ContentPath.SdCard:

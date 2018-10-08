@@ -50,7 +50,7 @@ namespace Ryujinx.HLE.HOS.Font
 
                 FontInfo CreateFont(string Name)
                 {
-                    if (ContentManager.SharedFontContentDictionary.TryGetValue(Name, out long FontTitle))
+                    if (ContentManager.TryGetFontTitle(Name, out long FontTitle))
                     {
                         string FontContentPath = ContentManager.GetInstalledPath(FontTitle, ContentType.Data, StorageId.NandSystem);
 
@@ -70,7 +70,7 @@ namespace Ryujinx.HLE.HOS.Font
 
                             NcaSection RomfsSection = Nca.Sections.FirstOrDefault(x => x?.Type == SectionType.Romfs);
 
-                            Romfs Romfs = new Romfs(Nca.OpenSection(RomfsSection.SectionNum, false));
+                            Romfs Romfs = new Romfs(Nca.OpenSection(RomfsSection.SectionNum, false, Device.System.EnableFsIntegrityChecks));
 
                             Stream FontFile = Romfs.OpenFile(Romfs.Files[FileIndex]);
 

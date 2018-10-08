@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.IO;
-using Ryujinx.HLE.HOS;
+﻿using Ryujinx.HLE.HOS;
+using Ryujinx.HLE.HOS.Services.FspSrv;
 
-namespace Ryujinx.HLE.HOS.Services.FspSrv
+namespace Ryujinx.HLE.FileSystem
 {
     interface IFileSystemProvider
     {

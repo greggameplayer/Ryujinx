@@ -1,13 +1,14 @@
-﻿using System;
+﻿using LibHac;
+using Ryujinx.HLE.HOS;
+using Ryujinx.HLE.HOS.Services.FspSrv;
+using System;
 using System.Collections.Generic;
-using System.Text;
 using System.IO;
-using LibHac;
 using System.Linq;
 
 using static Ryujinx.HLE.HOS.ErrorCode;
 
-namespace Ryujinx.HLE.HOS.Services.FspSrv
+namespace Ryujinx.HLE.FileSystem
 {
     class RomFileSystemProvider : IFileSystemProvider
     {

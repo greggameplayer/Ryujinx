@@ -36,99 +36,6 @@ namespace Ryujinx.HLE.HOS.Services.FspSrv
             };
         }
 
-        private long OpenFileSystemWithId(ServiceCtx Context)
-        {
-            FileSystemType FileSystemType = (FileSystemType)Context.RequestData.ReadInt32();
-
-            long TitleId = Context.RequestData.ReadInt64();
-
-            string Path = ReadUtf8String(Context);
-
-            string FullPath = Context.Device.FileSystem.SwitchPathToSystemPath(Path);
-
-            FileStream FileStream = new FileStream(FullPath, FileMode.Open, FileAccess.Read);
-
-            Nca Nca = new Nca(Context.Device.System.KeySet, FileStream, false);
-
-            NcaSection RomfsSection = Nca.Sections.FirstOrDefault(x => x?.Type == SectionType.Romfs);
-
-            if (RomfsSection != null)
-            {
-                Stream RomfsStream = Nca.OpenSection(RomfsSection.SectionNum, false);
-
-                IFileSystem NcaFileSystem = new IFileSystem(Path, new RomFileSystemProvider(RomfsStream));
-
-                MakeObject(Context, NcaFileSystem);
-
-                return 0;
-            }
-
-            return MakeError(ErrorModule.Fs, FsErr.InvalidInput);
-        }
-
-        private long OpenDataStorageByDataId(ServiceCtx Context)
-        {
-            StorageId StorageId = (StorageId)Context.RequestData.ReadByte();
-
-            byte[] Padding = Context.RequestData.ReadBytes(7);
-
-            long TitleId = Context.RequestData.ReadInt64();
-
-            StorageId InstalledStorage =
-                Context.Device.System.ContentManager.GetInstalledStorage(TitleId, ContentType.Data, StorageId);
-
-            if(InstalledStorage == StorageId.None)
-            {
-                InstalledStorage =
-                    Context.Device.System.ContentManager.GetInstalledStorage(TitleId, ContentType.AocData, StorageId);
-            }
-
-            if (InstalledStorage!= StorageId.None)
-            {
-                string InstallPath =
-                    Context.Device.System.ContentManager.GetInstalledPath(TitleId, ContentType.AocData, StorageId);
-
-                NcaId NcaId = Context.Device.System.ContentManager.GetInstalledNcaId(TitleId, ContentType.AocData);
-
-                if (string.IsNullOrWhiteSpace(InstallPath))
-                {
-                    InstallPath = 
-                        Context.Device.System.ContentManager.GetInstalledPath(TitleId, ContentType.Data, StorageId);
-                }
-
-                if(NcaId == null)
-                {
-                    NcaId = Context.Device.System.ContentManager.GetInstalledNcaId(TitleId, ContentType.Data);
-                }
-
-                if (!string.IsNullOrWhiteSpace(InstallPath))
-                {
-                    string NcaPath = InstallPath;
-
-                    if (File.Exists(NcaPath))
-                    {
-                        FileStream NcaStream = new FileStream(NcaPath, FileMode.Open, FileAccess.Read);
-
-                        Nca Nca = new Nca(Context.Device.System.KeySet, NcaStream, false);
-
-                        NcaSection RomfsSection = Nca.Sections.FirstOrDefault(x => x?.Type == SectionType.Romfs);
-
-                        Stream RomfsStream = Nca.OpenSection(RomfsSection.SectionNum, false);
-
-                        MakeObject(Context, new IStorage(RomfsStream));
-
-                        return 0;
-                    }
-                    else
-                        throw new FileNotFoundException($"No nca found in Path `{NcaPath}`.");
-                }
-                else
-                    throw new DirectoryNotFoundException($"Path for title id {TitleId} on Storage {StorageId} was not found in Path {InstallPath}.");
-            }
-
-            throw new FileNotFoundException($"System archive with titleid {TitleId.ToString("x16")} was not found on Storage {StorageId}. Found in {InstalledStorage}.");
-        }
-
         public long SetCurrentProcess(ServiceCtx Context)
         {
             return 0;
@@ -167,6 +74,36 @@ namespace Ryujinx.HLE.HOS.Services.FspSrv
             return 0;
         }
 
+        public long OpenFileSystemWithId(ServiceCtx Context)
+        {
+            FileSystemType FileSystemType = (FileSystemType)Context.RequestData.ReadInt32();
+
+            long TitleId = Context.RequestData.ReadInt64();
+
+            string Path = ReadUtf8String(Context);
+
+            string FullPath = Context.Device.FileSystem.SwitchPathToSystemPath(Path);
+
+            FileStream FileStream = new FileStream(FullPath, FileMode.Open, FileAccess.Read);
+
+            Nca Nca = new Nca(Context.Device.System.KeySet, FileStream, false);
+
+            NcaSection RomfsSection = Nca.Sections.FirstOrDefault(x => x?.Type == SectionType.Romfs);
+
+            if (RomfsSection != null)
+            {
+                Stream RomfsStream = Nca.OpenSection(RomfsSection.SectionNum, false, Context.Device.System.EnableFsIntegrityChecks);
+
+                IFileSystem NcaFileSystem = new IFileSystem(Path, new RomFileSystemProvider(RomfsStream));
+
+                MakeObject(Context, NcaFileSystem);
+
+                return 0;
+            }
+
+            return MakeError(ErrorModule.Fs, FsErr.InvalidInput);
+        }
+
         public long OpenSdCardFileSystem(ServiceCtx Context)
         {
             string SdCardPath = Context.Device.FileSystem.GetSdCardPath();
@@ -197,6 +134,69 @@ namespace Ryujinx.HLE.HOS.Services.FspSrv
             MakeObject(Context, new IStorage(Context.Device.FileSystem.RomFs));
 
             return 0;
+        }
+
+        public long OpenDataStorageByDataId(ServiceCtx Context)
+        {
+            StorageId StorageId = (StorageId)Context.RequestData.ReadByte();
+
+            byte[] Padding = Context.RequestData.ReadBytes(7);
+
+            long TitleId = Context.RequestData.ReadInt64();
+
+            StorageId InstalledStorage =
+                Context.Device.System.ContentManager.GetInstalledStorage(TitleId, ContentType.Data, StorageId);
+
+            if (InstalledStorage == StorageId.None)
+            {
+                InstalledStorage =
+                    Context.Device.System.ContentManager.GetInstalledStorage(TitleId, ContentType.AocData, StorageId);
+            }
+
+            if (InstalledStorage != StorageId.None)
+            {
+                string InstallPath =
+                    Context.Device.System.ContentManager.GetInstalledPath(TitleId, ContentType.AocData, StorageId);
+
+                NcaId NcaId = Context.Device.System.ContentManager.GetInstalledNcaId(TitleId, ContentType.AocData);
+
+                if (string.IsNullOrWhiteSpace(InstallPath))
+                {
+                    InstallPath =
+                        Context.Device.System.ContentManager.GetInstalledPath(TitleId, ContentType.Data, StorageId);
+                }
+
+                if (NcaId == null)
+                {
+                    NcaId = Context.Device.System.ContentManager.GetInstalledNcaId(TitleId, ContentType.Data);
+                }
+
+                if (!string.IsNullOrWhiteSpace(InstallPath))
+                {
+                    string NcaPath = InstallPath;
+
+                    if (File.Exists(NcaPath))
+                    {
+                        FileStream NcaStream = new FileStream(NcaPath, FileMode.Open, FileAccess.Read);
+
+                        Nca Nca = new Nca(Context.Device.System.KeySet, NcaStream, false);
+
+                        NcaSection RomfsSection = Nca.Sections.FirstOrDefault(x => x?.Type == SectionType.Romfs);
+
+                        Stream RomfsStream = Nca.OpenSection(RomfsSection.SectionNum, false, Context.Device.System.EnableFsIntegrityChecks);
+
+                        MakeObject(Context, new IStorage(RomfsStream));
+
+                        return 0;
+                    }
+                    else
+                        throw new FileNotFoundException($"No nca found in Path `{NcaPath}`.");
+                }
+                else
+                    throw new DirectoryNotFoundException($"Path for title id {TitleId} on Storage {StorageId} was not found in Path {InstallPath}.");
+            }
+
+            throw new FileNotFoundException($"System archive with titleid {TitleId:'x16'} was not found on Storage {StorageId}. Found in {InstalledStorage}.");
         }
 
         public long OpenPatchDataStorageByCurrentProcess(ServiceCtx Context)

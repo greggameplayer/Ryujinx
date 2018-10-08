@@ -181,31 +181,6 @@ namespace Ryujinx.HLE.HOS
                 return;
             }
 
-            if (State.InstallContents)
-            {
-                ContentManager.LoadEntries();
-
-                if (Xci.UpdatePartition != null)
-                {
-                    foreach (PfsFileEntry FileEntry in Xci.UpdatePartition.Files.Where(x => x.Name.EndsWith(".nca")))
-                    {
-                        using (Stream NcaStream = Xci.UpdatePartition.OpenFile(FileEntry))
-                        {
-                            try
-                            {
-                                Nca ContentNca = new Nca(KeySet, NcaStream, false);
-
-                                ContentManager.InstallContent(ContentNca, FileEntry.Name, StorageId.NandSystem);
-                            }
-                            catch (InvalidDataException ex)
-                            {
-
-                            }
-                        }
-                    }
-                }
-            }
-
             ContentManager.LoadEntries();
 
             LoadNca(MainNca, ControlNca);

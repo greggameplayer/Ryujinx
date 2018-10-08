@@ -13,11 +13,9 @@ namespace Ryujinx.HLE.FileSystem.Content
     {
         private Dictionary<StorageId, LinkedList<LocationEntry>> LocationEntries;
 
-        public Dictionary<string, long> SharedFontContentDictionary { get; private set; }
+        private Dictionary<string, long> SharedFontTitleDictionary;
 
-        public SortedDictionary<(ulong,ContentType),string> ContentDictionary { get; private set; }
-
-        public ContentStorageId DefaultInstallationStorage { get; private set; }
+        private SortedDictionary<(ulong, ContentType), string> ContentDictionary;
 
         private Switch Device;
 
@@ -27,7 +25,7 @@ namespace Ryujinx.HLE.FileSystem.Content
 
             LocationEntries = new Dictionary<StorageId, LinkedList<LocationEntry>>();
 
-            SharedFontContentDictionary = new Dictionary<string, long>()
+            SharedFontTitleDictionary = new Dictionary<string, long>()
             {
                 {"FontStandard",                  0x0100000000000811 },
                 {"FontChineseSimplified",         0x0100000000000814 },
@@ -47,13 +45,11 @@ namespace Ryujinx.HLE.FileSystem.Content
             foreach (StorageId StorageId in Enum.GetValues(typeof(StorageId)))
             {
                 string ContentInstallationDirectory = null;
-
-                string ContentPathString = null;
+                string ContentPathString            = null;
 
                 try
                 {
-                    ContentPathString = LocationHelper.GetContentPath(StorageId);
-
+                    ContentPathString            = LocationHelper.GetContentPath(StorageId);
                     ContentInstallationDirectory = LocationHelper.GetRealPath(Device.FileSystem, ContentPathString);
                 }
                 catch (NotSupportedException NEx)
@@ -65,16 +61,9 @@ namespace Ryujinx.HLE.FileSystem.Content
 
                 LinkedList<LocationEntry> LocationList = new LinkedList<LocationEntry>();
 
-                List<long> ReadTitleIds = new List<long>();
-
                 void AddEntry(LocationEntry Entry)
                 {
                     LocationList.AddLast(Entry);
-
-                    if (!ReadTitleIds.Contains(Entry.TitleId))
-                    {
-                        ReadTitleIds.Add(Entry.TitleId);
-                    }
                 }
 
                 foreach (string DirectoryPath in Directory.EnumerateDirectories(ContentInstallationDirectory))
@@ -85,13 +74,12 @@ namespace Ryujinx.HLE.FileSystem.Content
 
                         using (FileStream NcaFile = new FileStream(Directory.GetFiles(DirectoryPath)[0], FileMode.Open, FileAccess.Read))
                         {
-
                             Nca Nca = new Nca(Device.System.KeySet, NcaFile, false);
 
                             LocationEntry Entry = new LocationEntry(ContentPathString,
-                                0,
-                                (long)Nca.Header.TitleId,
-                                Nca.Header.ContentType);
+                                                                    0,
+                                                                    (long)Nca.Header.TitleId,
+                                                                    Nca.Header.ContentType);
                             
 
                             AddEntry(Entry);
@@ -118,9 +106,9 @@ namespace Ryujinx.HLE.FileSystem.Content
                             Nca Nca = new Nca(Device.System.KeySet, NcaFile, false);
 
                             LocationEntry Entry = new LocationEntry(ContentPathString,
-                                0,
-                                (long)Nca.Header.TitleId,
-                                Nca.Header.ContentType);
+                                                                    0,
+                                                                    (long)Nca.Header.TitleId,
+                                                                    Nca.Header.ContentType);
 
                             AddEntry(Entry);
 
@@ -171,94 +159,6 @@ namespace Ryujinx.HLE.FileSystem.Content
             }
         }
 
-        /*public string GetProgramPath(long TitleId)
-        {
-            LocationEntry LocationEntry = GetLocation(TitleId);
-        }*/
-
-        public void InstallContent(string NcaPath, StorageId StorageId)
-        {
-            if (File.Exists(NcaPath))
-            {
-                FileStream NcaStream = new FileStream(NcaPath, FileMode.Open, FileAccess.Read);
-
-                Nca Nca = new Nca(Device.System.KeySet, NcaStream, false);
-
-                string Filename = Path.GetFileName(NcaPath);
-
-                InstallContent(Nca, Filename, StorageId);
-
-                NcaStream.Close();
-
-                NcaStream.Dispose();
-
-                Nca.Dispose();
-            }
-        }
-
-        public void InstallContent(Nca Nca, string Filename, StorageId StorageId)
-        {
-            if (Nca.Header.Distribution == DistributionType.Download)
-            {
-                string ContentStoragePath = LocationHelper.GetContentPath(StorageId);
-
-                string RealContentPath = LocationHelper.GetRealPath(Device.FileSystem, ContentStoragePath);
-
-                string NcaName = Filename.Substring(0, Filename.IndexOf("."));
-
-                if (!NcaName.EndsWith(".nca"))
-                {
-                    NcaName += ".nca";
-                }
-
-                string InstallationPath = Path.Combine(RealContentPath, NcaName);
-
-                string FilePath = Path.Combine(InstallationPath, "00");
-
-                if (File.Exists(FilePath))
-                {
-                    FileInfo FileInfo = new FileInfo(FilePath);
-
-                    if (FileInfo.Length == (long)Nca.Header.NcaSize)
-                    {
-                        return;
-                    }
-                }
-
-                if (ContentDictionary.ContainsKey((Nca.Header.TitleId, Nca.Header.ContentType)))
-                {
-                    string InstalledPath = GetInstalledPath((long)Nca.Header.TitleId, Nca.Header.ContentType, StorageId);
-
-                    if (File.Exists(InstalledPath))
-                    {
-                        File.Delete(InstalledPath);
-                    }
-                    if (Directory.Exists(Path.GetDirectoryName(InstalledPath)))
-                    {
-                        Directory.Delete(Path.GetDirectoryName(InstalledPath), true);
-                    }
-                }
-
-                if (!Directory.Exists(InstallationPath))
-                {
-                    Directory.CreateDirectory(InstallationPath);
-                }
-
-                using (FileStream FileStream = File.Create(FilePath))
-                {
-                    Stream NcaStream = Nca.GetStream();
-
-                    NcaStream.CopyStream(FileStream, NcaStream.Length);
-
-                    Nca.Dispose();
-
-                    NcaStream.Close();
-
-                    FileStream.Close();
-                }
-            }
-        }
-
         public NcaId GetInstalledNcaId(long TitleId, ContentType ContentType)
         {
             if (ContentDictionary.ContainsKey(((ulong)TitleId,ContentType)))
@@ -290,7 +190,7 @@ namespace Ryujinx.HLE.FileSystem.Content
         {
             LocationEntry LocationEntry = GetLocation(TitleId, ContentType, StorageId);
 
-            if(VerifyContentType(LocationEntry,ContentType))
+            if (VerifyContentType(LocationEntry, ContentType))
             {
                 return LocationEntry.ContentPath;
             }
@@ -371,6 +271,11 @@ namespace Ryujinx.HLE.FileSystem.Content
                     LocationList.Remove(Entry);
                 }
             }
+        }
+
+        public bool TryGetFontTitle(string FontName, out long TitleId)
+        {
+            return SharedFontTitleDictionary.TryGetValue(FontName, out TitleId);
         }
 
         private LocationEntry GetLocation(long TitleId, ContentType ContentType,StorageId StorageId)
