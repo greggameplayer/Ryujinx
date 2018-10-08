@@ -113,6 +113,7 @@ namespace Ryujinx.Graphics
 
             Gpu.Renderer.Shader.BindProgram();
 
+            UploadGlobalMemory(Vmm, Keys);
             UploadTextures(Vmm, State, Keys);
             UploadConstBuffers(Vmm, State, Keys);
             UploadVertexArrays(Vmm, State);
@@ -456,6 +457,33 @@ namespace Ryujinx.Graphics
             else
             {
                 Gpu.Renderer.RenderTarget.SetMap(null);
+            }
+        }
+
+        private void UploadGlobalMemory(NvGpuVmm Vmm, long[] Keys)
+        {
+            for (int Index = 0; Index < Keys.Length; Index++)
+            {
+                ShaderDeclInfo GmemInfo = Gpu.Renderer.Shader.GetGlobalMemoryUsage(Keys[Index]);
+
+                if (GmemInfo == null)
+                {
+                    continue;
+                }
+
+                long Position = ConstBuffers[Index][GmemInfo.Cbuf].Position;
+
+                int BaseAddressLow = Vmm.ReadInt32(Position + GmemInfo.Index * 4);
+
+                int BaseAddressHigh = Vmm.ReadInt32(Position + GmemInfo.Index * 4 + 4);
+
+                long BaseAddress = (uint)BaseAddressLow | ((long)BaseAddressHigh << 32);
+
+                int GmemSize = Gpu.Renderer.Shader.GetGlobalMemorySize();
+
+                IntPtr Data = Vmm.GetHostAddress(BaseAddress, GmemSize);
+
+                Gpu.Renderer.Shader.SetGlobalMemory(Data, GmemSize);
             }
         }
 
