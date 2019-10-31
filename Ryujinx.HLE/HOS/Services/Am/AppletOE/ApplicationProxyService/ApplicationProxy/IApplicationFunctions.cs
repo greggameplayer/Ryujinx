@@ -4,6 +4,7 @@ using Ryujinx.HLE.HOS.Kernel.Common;
 using Ryujinx.HLE.HOS.Kernel.Threading;
 using Ryujinx.HLE.HOS.Services.Am.AppletAE;
 using Ryujinx.HLE.HOS.Services.Am.AppletAE.Storage;
+using Ryujinx.HLE.Utilities;
 using System;
 
 namespace Ryujinx.HLE.HOS.Services.Am.AppletOE.ApplicationProxyService.ApplicationProxy
@@ -77,6 +78,24 @@ namespace Ryujinx.HLE.HOS.Services.Am.AppletOE.ApplicationProxyService.Applicati
         {
             // FIXME: Need to check correct version on a switch.
             context.ResponseData.Write(1L);
+            context.ResponseData.Write(0L);
+
+            return ResultCode.Success;
+        }
+
+        [Command(26)]
+        public ResultCode GetSaveDataSize(ServiceCtx context)
+        {
+            byte unknown1 = context.RequestData.ReadByte();
+
+            UInt128 uuid = new UInt128(
+                context.RequestData.ReadInt64(),
+                context.RequestData.ReadInt64());
+
+
+            Logger.PrintStub(LogClass.ServiceAm, new { unknown1, uuid });
+
+            context.ResponseData.Write(0L);
             context.ResponseData.Write(0L);
 
             return ResultCode.Success;
