@@ -1309,5 +1309,12 @@ namespace ARMeilleure.Instructions
             throw new ArgumentException(nameof(size));
         }
 #endregion
+
+#region "MaxMin"
+        public static long  MaxS64(long  val1, long  val2) => (val1 >= val2) ? val1 : val2;
+        public static ulong MaxU64(ulong val1, ulong val2) => (val1 >= val2) ? val1 : val2;
+        public static long  MinS64(long  val1, long  val2) => (val1 <= val2) ? val1 : val2;
+        public static ulong MinU64(ulong val1, ulong val2) => (val1 <= val2) ? val1 : val2;
+#endregion
     }
 }
