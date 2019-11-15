@@ -1,7 +1,6 @@
 using ARMeilleure.Decoders;
 using ARMeilleure.IntermediateRepresentation;
 using ARMeilleure.Translation;
-using System;
 using System.Collections.Generic;
 
 using static ARMeilleure.Instructions.InstEmitHelper;
@@ -592,32 +591,17 @@ namespace ARMeilleure.Instructions
                     args.Add(GetVec((op.Rn + index) & 0x1F));
                 }
 
-                Delegate dlg = null;
+                string name = null;
 
                 switch (op.Size)
                 {
-                    case 1: dlg = isTbl
-                        ? (Delegate)new _V128_V128_S32_V128     (SoftFallback.Tbl1)
-                        : (Delegate)new _V128_V128_V128_S32_V128(SoftFallback.Tbx1);
-                        break;
-
-                    case 2: dlg = isTbl
-                        ? (Delegate)new _V128_V128_S32_V128_V128     (SoftFallback.Tbl2)
-                        : (Delegate)new _V128_V128_V128_S32_V128_V128(SoftFallback.Tbx2);
-                        break;
-
-                    case 3: dlg = isTbl
-                        ? (Delegate)new _V128_V128_S32_V128_V128_V128     (SoftFallback.Tbl3)
-                        : (Delegate)new _V128_V128_V128_S32_V128_V128_V128(SoftFallback.Tbx3);
-                        break;
-
-                    case 4: dlg = isTbl
-                        ? (Delegate)new _V128_V128_S32_V128_V128_V128_V128     (SoftFallback.Tbl4)
-                        : (Delegate)new _V128_V128_V128_S32_V128_V128_V128_V128(SoftFallback.Tbx4);
-                        break;
+                    case 1: name = isTbl ? nameof(SoftFallback.Tbl1) : nameof(SoftFallback.Tbx1); break;
+                    case 2: name = isTbl ? nameof(SoftFallback.Tbl2) : nameof(SoftFallback.Tbx2); break;
+                    case 3: name = isTbl ? nameof(SoftFallback.Tbl3) : nameof(SoftFallback.Tbx3); break;
+                    case 4: name = isTbl ? nameof(SoftFallback.Tbl4) : nameof(SoftFallback.Tbx4); break;
                 }
 
-                context.Copy(d, context.Call(dlg, args.ToArray()));
+                context.Copy(d, context.SoftFallbackCall(name, args.ToArray()));
             }
         }
 
