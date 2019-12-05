@@ -8,7 +8,7 @@
     "logging_enable_guest": true,
     "logging_enable_fs_access_log": false,
     "logging_filtered_classes": [
-        
+
     ],
     "enable_file_log": true,
     "system_language": "AmericanEnglish",
@@ -33,7 +33,7 @@
         "path_column": true
     },
     "game_dirs": [
-        
+
     ],
     "enable_custom_theme": false,
     "custom_theme_path": "",
