@@ -3,9 +3,8 @@ using Gtk;
 using JsonPrettyPrinterPlus;
 using Ryujinx.Audio;
 using Ryujinx.Common.Logging;
-using Ryujinx.Graphics.Gal.OpenGL;
-using Ryujinx.Graphics.Gal;
 using Ryujinx.HLE.FileSystem;
+using Ryujinx.Graphics.OpenGL;
 using Ryujinx.Profiler;
 using System;
 using System.Diagnostics;
@@ -26,7 +25,7 @@ namespace Ryujinx.Ui
     {
         private static HLE.Switch _device;
 
-        private static IGalRenderer _renderer;
+        private static Renderer _renderer;
 
         private static IAalOutput _audioOut;
 
@@ -87,7 +86,7 @@ namespace Ryujinx.Ui
 
             ApplicationLibrary.ApplicationAdded += Application_Added;
 
-            _renderer = new OglRenderer();
+            _renderer = new Renderer();
 
             _audioOut = InitializeAudioEngine();
 
@@ -134,17 +133,17 @@ namespace Ryujinx.Ui
             if (SwitchSettings.SwitchConfig.GuiColumns.PathColumn)       { _pathToggle.Active       = true; }
 
             _gameTable.Model = _tableStore = new ListStore(
-                typeof(bool), 
-                typeof(Gdk.Pixbuf), 
-                typeof(string), 
-                typeof(string), 
-                typeof(string), 
-                typeof(string), 
-                typeof(string), 
-                typeof(string), 
-                typeof(string), 
+                typeof(bool),
+                typeof(Gdk.Pixbuf),
+                typeof(string),
+                typeof(string),
+                typeof(string),
+                typeof(string),
+                typeof(string),
+                typeof(string),
+                typeof(string),
                 typeof(string));
-            
+
             _tableStore.SetSortFunc(5, TimePlayedSort);
             _tableStore.SetSortFunc(6, LastPlayedSort);
             _tableStore.SetSortFunc(8, FileSizeSort);
@@ -385,7 +384,7 @@ namespace Ryujinx.Ui
         private static void CreateGameWindow()
         {
             Configuration.ConfigureHid(_device, SwitchSettings.SwitchConfig);
-            
+
             using (_screen = new GlScreen(_device, _renderer))
             {
                 _screen.MainLoop();
@@ -455,11 +454,11 @@ namespace Ryujinx.Ui
         /// <returns>An <see cref="IAalOutput"/> supported by this machine</returns>
         private static IAalOutput InitializeAudioEngine()
         {
-            if (SoundIoAudioOut.IsSupported)
+            /*if (SoundIoAudioOut.IsSupported)
             {
                 return new SoundIoAudioOut();
             }
-            else if (OpenALAudioOut.IsSupported)
+            else*/ if (OpenALAudioOut.IsSupported)
             {
                 return new OpenALAudioOut();
             }
@@ -501,7 +500,7 @@ namespace Ryujinx.Ui
             IJsonFormatterResolver resolver = CompositeResolver.Create(new[] { StandardResolver.AllowPrivateSnakeCase });
 
             ApplicationMetadata appMetadata;
-            
+
             using (Stream stream = File.OpenRead(metadataPath))
             {
                 appMetadata = JsonSerializer.Deserialize<ApplicationMetadata>(stream, resolver);
