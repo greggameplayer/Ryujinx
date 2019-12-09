@@ -1,3 +1,4 @@
+using ARMeilleure.Translation.AOT;
 using Gtk;
 using Ryujinx.Common.Logging;
 using Ryujinx.Profiler;
@@ -44,6 +45,7 @@ namespace Ryujinx
 
         private static void CurrentDomain_ProcessExit(object sender, EventArgs e)
         {
+            Aot.Dispose();
             Logger.Shutdown();
         }
 
@@ -55,6 +57,7 @@ namespace Ryujinx
 
             if (e.IsTerminating)
             {
+                Aot.Dispose();
                 Logger.Shutdown();
             }
         }
