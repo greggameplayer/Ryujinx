@@ -77,7 +77,14 @@ namespace ARMeilleure.Instructions
 
         public static void Addp_V(ArmEmitterContext context)
         {
-            EmitVectorPairwiseOpZx(context, (op1, op2) => context.Add(op1, op2));
+            if (Optimizations.UseSsse3)
+            {
+                EmitSsse3VectorPairwiseOp(context, X86PaddInstruction);
+            }
+            else
+            {
+                EmitVectorPairwiseOpZx(context, (op1, op2) => context.Add(op1, op2));
+            }
         }
 
         public static void Addv_V(ArmEmitterContext context)
@@ -390,7 +397,7 @@ namespace ARMeilleure.Instructions
         {
             if (Optimizations.FastFP && Optimizations.UseSse2)
             {
-                EmitVectorPairwiseOpF(context, Intrinsic.X86Addps, Intrinsic.X86Addpd);
+                EmitSse2VectorPairwiseOpF(context, Intrinsic.X86Addps, Intrinsic.X86Addpd);
             }
             else
             {
@@ -538,7 +545,7 @@ namespace ARMeilleure.Instructions
         {
             if (Optimizations.FastFP && Optimizations.UseSse2)
             {
-                EmitVectorPairwiseOpF(context, Intrinsic.X86Maxps, Intrinsic.X86Maxpd);
+                EmitSse2VectorPairwiseOpF(context, Intrinsic.X86Maxps, Intrinsic.X86Maxpd);
             }
             else
             {
@@ -613,7 +620,7 @@ namespace ARMeilleure.Instructions
         {
             if (Optimizations.FastFP && Optimizations.UseSse2)
             {
-                EmitVectorPairwiseOpF(context, Intrinsic.X86Minps, Intrinsic.X86Minpd);
+                EmitSse2VectorPairwiseOpF(context, Intrinsic.X86Minps, Intrinsic.X86Minpd);
             }
             else
             {
@@ -2019,9 +2026,16 @@ namespace ARMeilleure.Instructions
 
         public static void Smaxp_V(ArmEmitterContext context)
         {
-            string name = nameof(SoftFallback.MaxS64);
+            if (Optimizations.UseSsse3)
+            {
+                EmitSsse3VectorPairwiseOp(context, X86PmaxsInstruction);
+            }
+            else
+            {
+                Delegate dlg = new _S64_S64_S64(Math.Max);
 
-            EmitVectorPairwiseOpSx(context, (op1, op2) => context.SoftFallbackCall(name, op1, op2));
+                EmitVectorPairwiseOpSx(context, (op1, op2) => context.Call(dlg, op1, op2));
+            }
         }
 
         public static void Smaxv_V(ArmEmitterContext context)
@@ -2061,9 +2075,16 @@ namespace ARMeilleure.Instructions
 
         public static void Sminp_V(ArmEmitterContext context)
         {
-            string name = nameof(SoftFallback.MinS64);
+            if (Optimizations.UseSsse3)
+            {
+                EmitSsse3VectorPairwiseOp(context, X86PminsInstruction);
+            }
+            else
+            {
+                Delegate dlg = new _S64_S64_S64(Math.Min);
 
-            EmitVectorPairwiseOpSx(context, (op1, op2) => context.SoftFallbackCall(name, op1, op2));
+                EmitVectorPairwiseOpSx(context, (op1, op2) => context.Call(dlg, op1, op2));
+            }
         }
 
         public static void Sminv_V(ArmEmitterContext context)
@@ -2644,9 +2665,16 @@ namespace ARMeilleure.Instructions
 
         public static void Umaxp_V(ArmEmitterContext context)
         {
-            string name = nameof(SoftFallback.MaxU64);
+            if (Optimizations.UseSsse3)
+            {
+                EmitSsse3VectorPairwiseOp(context, X86PmaxuInstruction);
+            }
+            else
+            {
+                Delegate dlg = new _U64_U64_U64(Math.Max);
 
-            EmitVectorPairwiseOpZx(context, (op1, op2) => context.SoftFallbackCall(name, op1, op2));
+                EmitVectorPairwiseOpZx(context, (op1, op2) => context.Call(dlg, op1, op2));
+            }
         }
 
         public static void Umaxv_V(ArmEmitterContext context)
@@ -2686,9 +2714,16 @@ namespace ARMeilleure.Instructions
 
         public static void Uminp_V(ArmEmitterContext context)
         {
-            string name = nameof(SoftFallback.MinU64);
+            if (Optimizations.UseSsse3)
+            {
+                EmitSsse3VectorPairwiseOp(context, X86PminuInstruction);
+            }
+            else
+            {
+                Delegate dlg = new _U64_U64_U64(Math.Min);
 
-            EmitVectorPairwiseOpZx(context, (op1, op2) => context.SoftFallbackCall(name, op1, op2));
+                EmitVectorPairwiseOpZx(context, (op1, op2) => context.Call(dlg, op1, op2));
+            }
         }
 
         public static void Uminv_V(ArmEmitterContext context)
@@ -3115,11 +3150,11 @@ namespace ARMeilleure.Instructions
             Operand n = GetVec(op.Rn);
             Operand m = GetVec(op.Rm);
 
-            Operand nQNaNMask = EmitSse2VectorIsQNaNOpF(context, n);
-            Operand mQNaNMask = EmitSse2VectorIsQNaNOpF(context, m);
-
             Operand nNum = context.Copy(n);
             Operand mNum = context.Copy(m);
+
+            Operand nQNaNMask = EmitSse2VectorIsQNaNOpF(context, nNum);
+            Operand mQNaNMask = EmitSse2VectorIsQNaNOpF(context, mNum);
 
             int sizeF = op.Size & 1;
 
