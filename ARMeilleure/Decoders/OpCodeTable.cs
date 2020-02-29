@@ -244,6 +244,10 @@ namespace ARMeilleure.Decoders
             SetA64("0>1011101<1xxxxx110101xxxxxxxxxx", InstName.Fabd_V,          InstEmit.Fabd_V,          typeof(OpCodeSimdReg));
             SetA64("000111100x100000110000xxxxxxxxxx", InstName.Fabs_S,          InstEmit.Fabs_S,          typeof(OpCodeSimd));
             SetA64("0>0011101<100000111110xxxxxxxxxx", InstName.Fabs_V,          InstEmit.Fabs_V,          typeof(OpCodeSimd));
+            SetA64("011111100x1xxxxx111011xxxxxxxxxx", InstName.Facge_S,         InstEmit.Facge_S,         typeof(OpCodeSimdReg));
+            SetA64("0>1011100<1xxxxx111011xxxxxxxxxx", InstName.Facge_V,         InstEmit.Facge_V,         typeof(OpCodeSimdReg));
+            SetA64("011111101x1xxxxx111011xxxxxxxxxx", InstName.Facgt_S,         InstEmit.Facgt_S,         typeof(OpCodeSimdReg));
+            SetA64("0>1011101<1xxxxx111011xxxxxxxxxx", InstName.Facgt_V,         InstEmit.Facgt_V,         typeof(OpCodeSimdReg));
             SetA64("000111100x1xxxxx001010xxxxxxxxxx", InstName.Fadd_S,          InstEmit.Fadd_S,          typeof(OpCodeSimdReg));
             SetA64("0>0011100<1xxxxx110101xxxxxxxxxx", InstName.Fadd_V,          InstEmit.Fadd_V,          typeof(OpCodeSimdReg));
             SetA64("011111100x110000110110xxxxxxxxxx", InstName.Faddp_S,         InstEmit.Faddp_S,         typeof(OpCodeSimd));
