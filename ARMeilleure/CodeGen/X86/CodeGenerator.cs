@@ -34,6 +34,7 @@ namespace ARMeilleure.CodeGen.X86
             Add(Instruction.ByteSwap,                GenerateByteSwap);
             Add(Instruction.Call,                    GenerateCall);
             Add(Instruction.Clobber,                 GenerateClobber);
+            Add(Instruction.CompareAndSwap,          GenerateCompareAndSwap);
             Add(Instruction.CompareAndSwap128,       GenerateCompareAndSwap128);
             Add(Instruction.CompareEqual,            GenerateCompareEqual);
             Add(Instruction.CompareGreater,          GenerateCompareGreater);
@@ -76,6 +77,7 @@ namespace ARMeilleure.CodeGen.X86
             Add(Instruction.Store16,                 GenerateStore16);
             Add(Instruction.Store8,                  GenerateStore8);
             Add(Instruction.Subtract,                GenerateSubtract);
+            Add(Instruction.Tailcall,                GenerateTailcall);
             Add(Instruction.VectorCreateScalar,      GenerateVectorCreateScalar);
             Add(Instruction.VectorExtract,           GenerateVectorExtract);
             Add(Instruction.VectorExtract16,         GenerateVectorExtract16);
@@ -539,6 +541,19 @@ namespace ARMeilleure.CodeGen.X86
         {
             // This is only used to indicate that a register is clobbered to the
             // register allocator, we don't need to produce any code.
+        }
+
+        private static void GenerateCompareAndSwap(CodeGenContext context, Operation operation)
+        {
+            Operand src1 = operation.GetSource(0);
+            Operand src2 = operation.GetSource(1);
+            Operand src3 = operation.GetSource(2);
+
+            EnsureSameType(src2, src3);
+
+            MemoryOperand memOp = new MemoryOperand(src3.Type, src1);
+
+            context.Assembler.Cmpxchg(memOp, src3);
         }
 
         private static void GenerateCompareAndSwap128(CodeGenContext context, Operation operation)
@@ -1079,6 +1094,13 @@ namespace ARMeilleure.CodeGen.X86
             {
                 context.Assembler.Subsd(dest, src1, src2);
             }
+        }
+
+        private static void GenerateTailcall(CodeGenContext context, Operation operation)
+        {
+            WriteEpilogue(context);
+
+            context.Assembler.Jmp(operation.GetSource(0));
         }
 
         private static void GenerateVectorCreateScalar(CodeGenContext context, Operation operation)

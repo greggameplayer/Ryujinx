@@ -20,6 +20,8 @@ namespace ARMeilleure.Translation
 
         private ConcurrentDictionary<ulong, TranslatedFunction> _funcs;
 
+        private JumpTable _jumpTable;
+
         private PriorityQueue<RejitRequest> _backgroundQueue;
 
         private AutoResetEvent _backgroundTranslatorEvent;
@@ -31,6 +33,8 @@ namespace ARMeilleure.Translation
             _memory = memory;
 
             _funcs = new ConcurrentDictionary<ulong, TranslatedFunction>();
+
+            _jumpTable = new JumpTable();
 
             _backgroundQueue = new PriorityQueue<RejitRequest>(2);
 
@@ -46,6 +50,7 @@ namespace ARMeilleure.Translation
                     TranslatedFunction func = Translate(request.Address, request.Mode, highCq: true);
 
                     _funcs.AddOrUpdate(request.Address, func, (key, oldFunc) => func);
+                    _jumpTable.RegisterFunction(request.Address, func);
                 }
                 else
                 {
@@ -69,7 +74,7 @@ namespace ARMeilleure.Translation
 
             Statistics.InitializeTimer();
 
-            NativeInterface.RegisterThread(context, _memory);
+            NativeInterface.RegisterThread(context, _memory, this);
 
             do
             {
@@ -98,7 +103,7 @@ namespace ARMeilleure.Translation
             return nextAddr;
         }
 
-        private TranslatedFunction GetOrTranslate(ulong address, ExecutionMode mode)
+        internal TranslatedFunction GetOrTranslate(ulong address, ExecutionMode mode)
         {
             // TODO: Investigate how we should handle code at unaligned addresses.
             // Currently, those low bits are used to store special flags.
@@ -122,14 +127,21 @@ namespace ARMeilleure.Translation
             return func;
         }
 
+        internal TranslatedFunction TryGetHighCqFunction(ulong address)
+        {
+            return _jumpTable.TryGetFunction(address);
+        }
+
         private TranslatedFunction Translate(ulong address, ExecutionMode mode, bool highCq)
         {
-            ArmEmitterContext context = new ArmEmitterContext(_memory, Aarch32Mode.User);
+            ArmEmitterContext context = new ArmEmitterContext(_memory, _jumpTable, (long)address, highCq, Aarch32Mode.User);
 
             Logger.StartPass(PassName.Decoding);
 
-            Block[] blocks = highCq
-                ? Decoder.DecodeFunction  (_memory, address, mode)
+            bool alwaysFunctions = true;
+
+            Block[] blocks = alwaysFunctions
+                ? Decoder.DecodeFunction  (_memory, address, mode, highCq)
                 : Decoder.DecodeBasicBlock(_memory, address, mode);
 
             Logger.EndPass(PassName.Decoding);
@@ -216,7 +228,7 @@ namespace ARMeilleure.Translation
                         // with some kind of branch).
                         if (isLastOp && block.Next == null)
                         {
-                            context.Return(Const(opCode.Address + (ulong)opCode.OpCodeSizeInBytes));
+                            InstEmitFlowHelper.EmitTailContinue(context, Const(opCode.Address + (ulong)opCode.OpCodeSizeInBytes));
                         }
                     }
                 }

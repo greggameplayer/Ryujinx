@@ -15,6 +15,9 @@ namespace ARMeilleure.Decoders
         // take too long to compile and use too much memory.
         private const int MaxInstsPerFunction = 5000;
 
+        // For lower code quality translation, we set a lower limit since we're blocking execution.
+        private const int MaxInstsPerFunctionLowCq = 500;
+
         private delegate object MakeOp(InstDescriptor inst, ulong address, int opCode);
 
         private static ConcurrentDictionary<Type, MakeOp> _opActivators;
@@ -33,7 +36,7 @@ namespace ARMeilleure.Decoders
             return new Block[] { block };
         }
 
-        public static Block[] DecodeFunction(MemoryManager memory, ulong address, ExecutionMode mode)
+        public static Block[] DecodeFunction(MemoryManager memory, ulong address, ExecutionMode mode, bool highCq)
         {
             List<Block> blocks = new List<Block>();
 
@@ -43,11 +46,13 @@ namespace ARMeilleure.Decoders
 
             int opsCount = 0;
 
+            int instructionLimit = highCq ? MaxInstsPerFunction : MaxInstsPerFunctionLowCq;
+
             Block GetBlock(ulong blkAddress)
             {
                 if (!visited.TryGetValue(blkAddress, out Block block))
                 {
-                    if (opsCount > MaxInstsPerFunction)
+                    if (opsCount > instructionLimit)
                     {
                         return null;
                     }
@@ -121,7 +126,7 @@ namespace ARMeilleure.Decoders
                         currBlock.Branch = GetBlock((ulong)op.Immediate);
                     }
 
-                    if (!IsUnconditionalBranch(lastOp) /*|| isCall*/)
+                    if (!IsUnconditionalBranch(lastOp) || isCall)
                     {
                         currBlock.Next = GetBlock(currBlock.EndAddress);
                     }
@@ -140,7 +145,75 @@ namespace ARMeilleure.Decoders
                 }
             }
 
+            RemoveTailCalls(address, blocks);
+
             return blocks.ToArray();
+        }
+
+        private static void RemoveTailCalls(ulong entryAddress, List<Block> blocks)
+        {
+            // Detect tail calls:
+            // - Assume this function spans the space covered by contiguous code blocks surrounding the entry address.
+            // - Unconditional jump to an area outside this contiguous region will be treated as a tail call.
+            // - Include a small allowance for jumps outside the contiguous range.
+
+            if (!BinarySearch(blocks, entryAddress, out int entryBlockId))
+            {
+                throw new InvalidOperationException("Function entry point is not contained in a block.");
+            }
+
+            ulong allowance = 4;
+            Block entryBlock = blocks[entryBlockId];
+            int startBlockIndex = entryBlockId;
+            Block startBlock = entryBlock;
+            int endBlockIndex = entryBlockId;
+            Block endBlock = entryBlock;
+
+            for (int i = entryBlockId + 1; i < blocks.Count; i++) // Search forwards.
+            {
+                Block block = blocks[i];
+                if (endBlock.EndAddress < block.Address - allowance) 
+                {
+                    break; // End of contiguous function.
+                }
+
+                endBlock = block;
+                endBlockIndex = i;
+            }
+
+            for (int i = entryBlockId - 1; i >= 0; i--) // Search backwards.
+            {
+                Block block = blocks[i];
+                if (startBlock.Address > block.EndAddress + allowance)
+                {
+                    break; // End of contiguous function.
+                }
+
+                startBlock = block;
+                startBlockIndex = i;
+            }
+
+            if (startBlockIndex == 0 && endBlockIndex == blocks.Count - 1)
+            {
+                return; // Nothing to do here.
+            }
+
+            // Replace all branches to blocks outside the range with null, and force a tail call.
+
+            for (int i = startBlockIndex; i <= endBlockIndex; i++)
+            {
+                Block block = blocks[i];
+                if (block.Branch != null && (block.Branch.Address > endBlock.EndAddress || block.Branch.EndAddress < startBlock.Address))
+                {
+                    block.Branch = null;
+                    block.TailCall = true;
+                }
+            }
+
+            // Finally, delete all blocks outside the contiguous range.
+
+            blocks.RemoveRange(endBlockIndex + 1, (blocks.Count - endBlockIndex) - 1);
+            blocks.RemoveRange(0, startBlockIndex);
         }
 
         private static bool BinarySearch(List<Block> blocks, ulong address, out int index)
