@@ -340,10 +340,6 @@ namespace Ryujinx.Ui
                         $"Host: {_device.Statistics.GetSystemFrameRate():00.00} FPS", 
                         $"Game: {_device.Statistics.GetGameFrameRate():00.00} FPS"));
 
-                    _device.System.SignalVsync();
-
-                    _device.VsyncEvent.Set();
-
                     _ticks = Math.Min(_ticks - _ticksPerFrame, _ticksPerFrame);
                 }
             }
