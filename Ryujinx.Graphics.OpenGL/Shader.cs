@@ -12,7 +12,7 @@ namespace Ryujinx.Graphics.OpenGL
 
         public ShaderProgramInfo Info => _program.Info;
 
-        public ShaderStage Stage => Info.Stage;
+        public ShaderStage Stage => _program.Stage;
 
         public Shader(ShaderProgram program)
         {
@@ -20,7 +20,7 @@ namespace Ryujinx.Graphics.OpenGL
 
             ShaderType type = ShaderType.VertexShader;
 
-            switch (program.Info.Stage)
+            switch (program.Stage)
             {
                 case ShaderStage.Compute:                type = ShaderType.ComputeShader;        break;
                 case ShaderStage.Vertex:                 type = ShaderType.VertexShader;         break;

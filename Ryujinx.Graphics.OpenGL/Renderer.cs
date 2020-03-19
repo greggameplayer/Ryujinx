@@ -2,7 +2,6 @@
 using Ryujinx.Common.Logging;
 using Ryujinx.Graphics.GAL;
 using Ryujinx.Graphics.Shader;
-using System;
 
 namespace Ryujinx.Graphics.OpenGL
 {
@@ -50,11 +49,6 @@ namespace Ryujinx.Graphics.OpenGL
         public IProgram CreateProgram(IShader[] shaders)
         {
             return new Program(shaders);
-        }
-
-        public IProgram CreateProgramFromGpuBinary(ReadOnlySpan<byte> data)
-        {
-            return new Program(data);
         }
 
         public ISampler CreateSampler(SamplerCreateInfo info)

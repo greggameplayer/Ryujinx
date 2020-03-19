@@ -18,11 +18,7 @@ namespace Ryujinx.Graphics.Gpu.Engine
     partial class Methods
     {
         private readonly GpuContext _context;
-
-        /// <summary>
-        /// Meta data of the current graphics shader.
-        /// </summary>
-        public ShaderMeta CurrentGpMeta { get; private set; }
+        private readonly ShaderProgramInfo[] _currentProgramInfo;
 
         /// <summary>
         /// In-memory shader cache.
@@ -51,6 +47,8 @@ namespace Ryujinx.Graphics.Gpu.Engine
             _context = context;
 
             ShaderCache = new ShaderCache(_context);
+
+            _currentProgramInfo = new ShaderProgramInfo[Constants.ShaderStages];
 
             BufferManager  = new BufferManager(context);
             TextureManager = new TextureManager(context);
@@ -240,9 +238,9 @@ namespace Ryujinx.Graphics.Gpu.Engine
         /// </summary>
         private void UpdateStorageBuffers()
         {
-            for (int stage = 0; stage < CurrentGpMeta.Info.Length; stage++)
+            for (int stage = 0; stage < _currentProgramInfo.Length; stage++)
             {
-                ShaderProgramInfo info = CurrentGpMeta.Info[stage];
+                ShaderProgramInfo info = _currentProgramInfo[stage];
 
                 if (info == null)
                 {
@@ -770,15 +768,15 @@ namespace Ryujinx.Graphics.Gpu.Engine
                 addressesArray[index] = baseAddress + shader.Offset;
             }
 
-            Shader.Shader gs = ShaderCache.GetGraphicsShader(state, addresses);
+            GraphicsShader gs = ShaderCache.GetGraphicsShader(state, addresses);
 
-            CurrentGpMeta = gs.Meta;
-
-            _vsUsesInstanceId = gs.Meta.Info[0]?.UsesInstanceId ?? false;
+            _vsUsesInstanceId = gs.Shaders[0]?.Program.Info.UsesInstanceId ?? false;
 
             for (int stage = 0; stage < Constants.ShaderStages; stage++)
             {
-                ShaderProgramInfo info = gs.Meta.Info[stage];
+                ShaderProgramInfo info = gs.Shaders[stage]?.Program.Info;
+
+                _currentProgramInfo[stage] = info;
 
                 if (info == null)
                 {
