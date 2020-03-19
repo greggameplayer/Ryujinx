@@ -2,7 +2,7 @@
 
 namespace Ryujinx.HLE.HOS.Services.SurfaceFlinger
 {
-    [StructLayout(LayoutKind.Explicit, Pack = 1)]
+    [StructLayout(LayoutKind.Explicit)]
     struct QueueBufferObject
     {
         [FieldOffset(0x0)]

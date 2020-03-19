@@ -5,8 +5,7 @@ namespace Ryujinx.Graphics.Gpu.State
     /// </summary>
     enum ReportMode
     {
-        Release   = 0,
-        Acquire   = 1,
+        Semaphore = 0,
         Counter   = 2
     }
 }

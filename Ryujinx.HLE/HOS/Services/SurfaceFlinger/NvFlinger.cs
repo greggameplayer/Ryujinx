@@ -1,4 +1,3 @@
-using Ryujinx.Common;
 using Ryujinx.Common.Logging;
 using Ryujinx.Graphics.GAL;
 using Ryujinx.Graphics.Gpu;
@@ -6,9 +5,7 @@ using Ryujinx.HLE.HOS.Kernel.Threading;
 using Ryujinx.HLE.HOS.Services.Nv.NvDrvServices.NvMap;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -120,37 +117,15 @@ namespace Ryujinx.HLE.HOS.Services.SurfaceFlinger
         private ResultCode GbpDequeueBuffer(ServiceCtx context, BinaryReader parcelReader)
         {
             // TODO: Errors.
-            int async  = parcelReader.ReadInt32();
-            int width  = parcelReader.ReadInt32();
-            int height = parcelReader.ReadInt32();
-            int format = parcelReader.ReadInt32();
-            int usage  = parcelReader.ReadInt32();
+            int format        = parcelReader.ReadInt32();
+            int width         = parcelReader.ReadInt32();
+            int height        = parcelReader.ReadInt32();
+            int getTimestamps = parcelReader.ReadInt32();
+            int usage         = parcelReader.ReadInt32();
 
             int slot = GetFreeSlotBlocking(width, height);
 
-            MultiFence multiFence = MultiFence.NoFence;
-
-            using (MemoryStream ms = new MemoryStream())
-            {
-                BinaryWriter writer = new BinaryWriter(ms);
-
-                // Allocated slot
-                writer.Write(slot);
-
-                // Has multi fence
-                writer.Write(1);
-
-                // Write the multi fnece
-                WriteFlattenedObject(writer, multiFence);
-
-                // Padding
-                writer.Write(0);
-
-                // Status
-                writer.Write(0);
-
-                return MakeReplyParcel(context, ms.ToArray());
-            }
+            return MakeReplyParcel(context, slot, 1, 0x24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
         }
 
         private ResultCode GbpQueueBuffer(ServiceCtx context, BinaryReader parcelReader)
@@ -167,9 +142,9 @@ namespace Ryujinx.HLE.HOS.Services.SurfaceFlinger
             parcelReader.BaseStream.Position = Position;
 
             _bufferQueue[slot].Transform = queueBufferObject.Transform;
-            _bufferQueue[slot].Fence     = queueBufferObject.Fence;
             _bufferQueue[slot].Crop      = queueBufferObject.Crop;
-            _bufferQueue[slot].State     = BufferState.Queued;
+
+            _bufferQueue[slot].State = BufferState.Queued;
 
             SendFrameBuffer(context, slot);
 
@@ -244,19 +219,14 @@ namespace Ryujinx.HLE.HOS.Services.SurfaceFlinger
             return reader.ReadBytes((int)flattenedObjectSize);
         }
 
-        private T ReadFlattenedObject<T>(BinaryReader reader) where T: struct
+        private unsafe T ReadFlattenedObject<T>(BinaryReader reader) where T: struct
         {
-            long flattenedObjectSize = reader.ReadInt64();
+            byte[] data = ReadFlattenedObject(reader);
 
-            Debug.Assert(flattenedObjectSize == Unsafe.SizeOf<T>());
-
-            return reader.ReadStruct<T>();
-        }
-
-        private unsafe void WriteFlattenedObject<T>(BinaryWriter writer, T value) where T : struct
-        {
-            writer.Write(Unsafe.SizeOf<T>());
-            writer.WriteStruct(value);
+            fixed (byte* ptr = data)
+            {
+                return Marshal.PtrToStructure<T>((IntPtr)ptr);
+            }
         }
 
         private ResultCode MakeReplyParcel(ServiceCtx context, params int[] ints)
@@ -358,19 +328,8 @@ namespace Ryujinx.HLE.HOS.Services.SurfaceFlinger
                 format,
                 bytesPerPixel,
                 crop,
-                AcquireBuffer,
                 ReleaseBuffer,
                 slot);
-        }
-
-        private void AcquireBuffer(GpuContext context, object slot)
-        {
-            AcquireBuffer(context, (int)slot);
-        }
-
-        private void AcquireBuffer(GpuContext context, int slot)
-        {
-            _bufferQueue[slot].Fence.WaitForever(context);
         }
 
         private void ReleaseBuffer(object slot)

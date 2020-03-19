@@ -15,11 +15,9 @@ using Ryujinx.HLE.HOS.Kernel.Memory;
 using Ryujinx.HLE.HOS.Kernel.Process;
 using Ryujinx.HLE.HOS.Kernel.Threading;
 using Ryujinx.HLE.HOS.Services.Mii;
-using Ryujinx.HLE.HOS.Services.Nv.NvDrvServices.NvHostCtrl;
 using Ryujinx.HLE.HOS.Services.Pcv.Bpc;
 using Ryujinx.HLE.HOS.Services.Settings;
 using Ryujinx.HLE.HOS.Services.Sm;
-using Ryujinx.HLE.HOS.Services.SurfaceFlinger;
 using Ryujinx.HLE.HOS.Services.Time.Clock;
 using Ryujinx.HLE.HOS.SystemState;
 using Ryujinx.HLE.Loaders.Executables;
@@ -37,7 +35,6 @@ using TimeServiceManager = Ryujinx.HLE.HOS.Services.Time.TimeManager;
 using NxStaticObject     = Ryujinx.HLE.Loaders.Executables.NxStaticObject;
 
 using static LibHac.Fs.ApplicationSaveDataManagement;
-
 
 namespace Ryujinx.HLE.HOS
 {
@@ -127,8 +124,6 @@ namespace Ryujinx.HLE.HOS
         public int GlobalAccessLogMode { get; set; }
 
         internal long HidBaseAddress { get; private set; }
-
-        internal NvHostSyncpt HostSyncpoint { get; private set; }
 
         public Horizon(Switch device, ContentManager contentManager)
         {
@@ -242,8 +237,6 @@ namespace Ryujinx.HLE.HOS
             TimeServiceManager.Instance.SetupEphemeralNetworkSystemClock();
 
             DatabaseImpl.Instance.InitializeDatabase(device);
-
-            HostSyncpoint = new NvHostSyncpt(device);
         }
 
         public void LoadCart(string exeFsDir, string romFsFile = null)

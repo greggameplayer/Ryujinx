@@ -123,8 +123,6 @@ namespace Ryujinx.Graphics.Gpu
 
         private SubChannel[] _subChannels;
 
-        private SubChannel _fifoChannel;
-
         /// <summary>
         /// Creates a new instance of the GPU commands FIFO.
         /// </summary>
@@ -137,47 +135,14 @@ namespace Ryujinx.Graphics.Gpu
 
             _mme = new int[MmeWords];
 
-            _fifoChannel = new SubChannel();
-
-            _context.Methods.RegisterCallbacksForFifo(_fifoChannel.State);
-
             _subChannels = new SubChannel[8];
 
             for (int index = 0; index < _subChannels.Length; index++)
             {
                 _subChannels[index] = new SubChannel();
 
-                _context.Methods.RegisterCallbacks(_subChannels[index].State);
+                context.Methods.RegisterCallbacks(_subChannels[index].State);
             }
-        }
-
-        /// <summary>
-        /// Send macro code/data to the MME
-        /// </summary>
-        /// <param name="index">The index in the MME</param>
-        /// <param name="data">The data to use</param>
-        public void SendMacroCodeData(int index, int data)
-        {
-            _mme[index] = data;
-        }
-
-        /// <summary>
-        /// Bind a macro index to a position for the MME
-        /// </summary>
-        /// <param name="index">The macro index</param>
-        /// <param name="data">The position of the macro</param>
-        public void BindMacro(int index, int position)
-        {
-            _macros[index] = new CachedMacro(position);
-        }
-
-        /// <summary>
-        /// Change the shadow RAM setting
-        /// </summary>
-        /// <param name="shadowCtrl">The new Shadow RAM setting</param>
-        public void SetMmeShadowRamControl(ShadowRamControl shadowCtrl)
-        {
-            _shadowCtrl = shadowCtrl;
         }
 
         /// <summary>
@@ -186,19 +151,60 @@ namespace Ryujinx.Graphics.Gpu
         /// <param name="meth">GPU method call parameters</param>
         public void CallMethod(MethodParams meth)
         {
-            if ((MethodOffset)meth.Method == MethodOffset.BindChannel)
+            if ((NvGpuFifoMeth)meth.Method == NvGpuFifoMeth.BindChannel)
             {
-                _subChannels[meth.SubChannel] = new SubChannel
-                {
-                    Class = (ClassId)meth.Argument
-                };
-
-                _context.Methods.RegisterCallbacks(_subChannels[meth.SubChannel].State);
+                _subChannels[meth.SubChannel].Class = (ClassId)meth.Argument;
             }
             else if (meth.Method < 0x60)
             {
-                // TODO: check if macros are shared between subchannels or not. For now let's assume they are.
-                _fifoChannel.State.CallMethod(meth);
+                switch ((NvGpuFifoMeth)meth.Method)
+                {
+                    case NvGpuFifoMeth.WaitForIdle:
+                    {
+                        _context.Methods.PerformDeferredDraws();
+
+                        _context.Renderer.Pipeline.Barrier();
+
+                        break;
+                    }
+
+                    case NvGpuFifoMeth.SetMacroUploadAddress:
+                    {
+                        _currMacroPosition = meth.Argument;
+
+                        break;
+                    }
+
+                    case NvGpuFifoMeth.SendMacroCodeData:
+                    {
+                        _mme[_currMacroPosition++] = meth.Argument;
+
+                        break;
+                    }
+
+                    case NvGpuFifoMeth.SetMacroBindingIndex:
+                    {
+                        _currMacroBindIndex = meth.Argument;
+
+                        break;
+                    }
+
+                    case NvGpuFifoMeth.BindMacro:
+                    {
+                        int position = meth.Argument;
+
+                        _macros[_currMacroBindIndex++] = new CachedMacro(position);
+
+                        break;
+                    }
+
+                    case NvGpuFifoMeth.SetMmeShadowRamControl:
+                    {
+                        _shadowCtrl = (ShadowRamControl)meth.Argument;
+
+                        break;
+                    }
+                }
             }
             else if (meth.Method < 0xe00)
             {
