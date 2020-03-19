@@ -62,6 +62,8 @@ namespace Ryujinx.HLE.HOS
 
         internal Switch Device { get; private set; }
 
+        internal SurfaceFlinger SurfaceFlinger { get; private set; }
+
         public SystemStateMgr State { get; private set; }
 
         internal bool KernelInitialized { get; private set; }
@@ -242,6 +244,8 @@ namespace Ryujinx.HLE.HOS
             DatabaseImpl.Instance.InitializeDatabase(device);
 
             HostSyncpoint = new NvHostSyncpt(device);
+
+            SurfaceFlinger = new SurfaceFlinger(device);
         }
 
         public void LoadCart(string exeFsDir, string romFsFile = null)
@@ -764,6 +768,8 @@ namespace Ryujinx.HLE.HOS
             {
                 _isDisposed = true;
 
+                SurfaceFlinger.Dispose();
+
                 KProcess terminationProcess = new KProcess(this);
 
                 KThread terminationThread = new KThread(this);
@@ -786,12 +792,6 @@ namespace Ryujinx.HLE.HOS
                 });
 
                 terminationThread.Start();
-
-                // Signal the vsync event to avoid issues of KThread waiting on it.
-                if (Device.EnableDeviceVsync)
-                {
-                    Device.VsyncEvent.Set();
-                }
 
                 // This is needed as the IPC Dummy KThread is also counted in the ThreadCounter.
                 ThreadCounter.Signal();
