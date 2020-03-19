@@ -125,14 +125,11 @@ namespace Ryujinx.HLE.HOS
             IExecutable[] staticObjects,
             byte[]        arguments = null)
         {
-            if (!metaData.Is64Bits)
-            {
-                Logger.PrintWarning(LogClass.Loader, "32-bits application detected.");
-            }
+            Logger.PrintInfo(LogClass.Loader, metaData.Is64Bit ? "64-bit" : "32-bit", "TitleArchitecture");
 
             ulong argsStart = 0;
             int   argsSize  = 0;
-            ulong codeStart = metaData.Is64Bits ? 0x8000000UL : 0x200000UL;
+            ulong codeStart = metaData.Is64Bit ? 0x8000000UL : 0x200000UL;
             int   codeSize  = 0;
 
             ulong[] nsoBase = new ulong[staticObjects.Length];
