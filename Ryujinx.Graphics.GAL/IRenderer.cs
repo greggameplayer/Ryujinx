@@ -14,7 +14,6 @@ namespace Ryujinx.Graphics.GAL
         IBuffer CreateBuffer(int size);
 
         IProgram CreateProgram(IShader[] shaders);
-        IProgram CreateProgramFromGpuBinary(ReadOnlySpan<byte> data);
 
         ISampler CreateSampler(SamplerCreateInfo info);
         ITexture CreateTexture(TextureCreateInfo info);

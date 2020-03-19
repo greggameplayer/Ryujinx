@@ -1,8 +1,5 @@
-using System;
-
 namespace Ryujinx.Graphics.Shader
 {
-    [Serializable]
     public struct TextureDescriptor
     {
         public string Name { get; }

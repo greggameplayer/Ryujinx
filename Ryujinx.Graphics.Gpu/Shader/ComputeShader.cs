@@ -5,7 +5,7 @@ namespace Ryujinx.Graphics.Gpu.Shader
     /// <summary>
     /// Cached compute shader code.
     /// </summary>
-    class Shader
+    class ComputeShader
     {
         /// <summary>
         /// Host shader program object.
@@ -15,17 +15,17 @@ namespace Ryujinx.Graphics.Gpu.Shader
         /// <summary>
         /// Cached shader.
         /// </summary>
-        public ShaderMeta Meta { get; }
+        public CachedShader Shader { get; }
 
         /// <summary>
         /// Creates a new instance of the compute shader.
         /// </summary>
         /// <param name="hostProgram">Host shader program</param>
-        /// <param name="meta">Shader meta data</param>
-        public Shader(IProgram hostProgram, ShaderMeta meta)
+        /// <param name="shader">Cached shader</param>
+        public ComputeShader(IProgram hostProgram, CachedShader shader)
         {
             HostProgram = hostProgram;
-            Meta        = meta;
+            Shader      = shader;
         }
     }
 }

@@ -3,7 +3,6 @@ using Ryujinx.Graphics.Gpu.Engine;
 using Ryujinx.Graphics.Gpu.Memory;
 using Ryujinx.Graphics.Gpu.Synchronization;
 using System;
-using System.IO;
 
 namespace Ryujinx.Graphics.Gpu
 {
@@ -102,16 +101,6 @@ namespace Ryujinx.Graphics.Gpu
         internal void AdvanceSequence()
         {
             SequenceNumber++;
-        }
-
-        public void LoadShaderCache() => Methods.ShaderCache.LoadShaderCache();
-
-        public void SetShaderCachePath(string path)
-        {
-            // Ensure that the directory exists.
-            Directory.CreateDirectory(path);
-
-            Methods.ShaderCache.Configuration.ShaderPath = path;
         }
 
         /// <summary>
