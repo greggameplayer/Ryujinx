@@ -1,10 +1,12 @@
 using ARMeilleure.Memory;
 using Ryujinx.HLE.HOS.Ipc;
 using Ryujinx.HLE.HOS.Kernel.Common;
-using Ryujinx.HLE.HOS.Services.SurfaceFlinger;
 using Ryujinx.HLE.HOS.Services.Vi.RootService.ApplicationDisplayService;
 using System;
+using System.IO;
 using System.Text;
+
+using static Ryujinx.HLE.HOS.Services.SurfaceFlinger.Parcel;
 
 namespace Ryujinx.HLE.HOS.Services.Vi.RootService
 {
@@ -21,8 +23,9 @@ namespace Ryujinx.HLE.HOS.Services.Vi.RootService
         // GetRelayService() -> object<nns::hosbinder::IHOSBinderDriver>
         public ResultCode GetRelayService(ServiceCtx context)
         {
-            MakeObject(context, new HOSBinderDriverServer());
-            //MakeObject(context, new IHOSBinderDriverOld(context.Device.System));
+            MakeObject(context, new IHOSBinderDriver(
+                context.Device.System,
+                context.Device.Gpu.Renderer));
 
             return ResultCode.Success;
         }
@@ -49,8 +52,9 @@ namespace Ryujinx.HLE.HOS.Services.Vi.RootService
         // GetIndirectDisplayTransactionService() -> object<nns::hosbinder::IHOSBinderDriver>
         public ResultCode GetIndirectDisplayTransactionService(ServiceCtx context)
         {
-            MakeObject(context, new HOSBinderDriverServer());
-            //MakeObject(context, new IHOSBinderDriverOld(context.Device.System));
+            MakeObject(context, new IHOSBinderDriver(
+                context.Device.System,
+                context.Device.Gpu.Renderer));
 
             return ResultCode.Success;
         }
@@ -67,8 +71,8 @@ namespace Ryujinx.HLE.HOS.Services.Vi.RootService
             context.Memory.WriteBytes(recBuffPtr, Encoding.ASCII.GetBytes("Default"));
             context.Memory.WriteInt64(recBuffPtr + 0x40, 0x1L);
             context.Memory.WriteInt64(recBuffPtr + 0x48, 0x1L);
-            context.Memory.WriteInt64(recBuffPtr + 0x50, 1280L);
-            context.Memory.WriteInt64(recBuffPtr + 0x58, 720L);
+            context.Memory.WriteInt64(recBuffPtr + 0x50, 1920L);
+            context.Memory.WriteInt64(recBuffPtr + 0x58, 1080L);
 
             context.ResponseData.Write(1L);
 
@@ -115,25 +119,16 @@ namespace Ryujinx.HLE.HOS.Services.Vi.RootService
         // OpenLayer(nn::vi::DisplayName, u64, nn::applet::AppletResourceUserId, pid) -> (u64, buffer<bytes, 6>)
         public ResultCode OpenLayer(ServiceCtx context)
         {
-            byte[] displayName = context.RequestData.ReadBytes(0x40);
+            long layerId = context.RequestData.ReadInt64();
+            long userId  = context.RequestData.ReadInt64();
 
-            long layerId   = context.RequestData.ReadInt64();
-            long userId    = context.RequestData.ReadInt64();
             long parcelPtr = context.Request.ReceiveBuff[0].Position;
 
-            IBinder producer = context.Device.System.SurfaceFlinger.OpenLayer(context.Process, layerId);
+            byte[] parcel = MakeIGraphicsBufferProducer(parcelPtr);
 
-            HOSBinderDriverServer.RegisterBinderObject(producer);
+            context.Memory.WriteBytes(parcelPtr, parcel);
 
-            Parcel parcel = new Parcel(0x28, 0x4);
-
-            parcel.WriteObject(producer, "dispdrv\0");
-
-            ReadOnlySpan<byte> parcelData = parcel.Finish();
-
-            context.Memory.WriteBytes(parcelPtr, parcelData.ToArray());
-
-            context.ResponseData.Write((long)parcelData.Length);
+            context.ResponseData.Write((long)parcel.Length);
 
             return ResultCode.Success;
         }
@@ -143,8 +138,6 @@ namespace Ryujinx.HLE.HOS.Services.Vi.RootService
         public ResultCode CloseLayer(ServiceCtx context)
         {
             long layerId = context.RequestData.ReadInt64();
-
-            context.Device.System.SurfaceFlinger.CloseLayer(layerId);
 
             return ResultCode.Success;
         }
@@ -160,20 +153,12 @@ namespace Ryujinx.HLE.HOS.Services.Vi.RootService
 
             Display disp = _displays.GetData<Display>((int)displayId);
 
-            IBinder producer = context.Device.System.SurfaceFlinger.CreateLayer(context.Process, out long layerId);
+            byte[] parcel = MakeIGraphicsBufferProducer(parcelPtr);
 
-            HOSBinderDriverServer.RegisterBinderObject(producer);
+            context.Memory.WriteBytes(parcelPtr, parcel);
 
-            Parcel parcel = new Parcel(0x28, 0x4);
-
-            parcel.WriteObject(producer, "dispdrv\0");
-
-            ReadOnlySpan<byte> parcelData = parcel.Finish();
-
-            context.Memory.WriteBytes(parcelPtr, parcelData.ToArray());
-
-            context.ResponseData.Write(layerId);
-            context.ResponseData.Write((long)parcelData.Length);
+            context.ResponseData.Write(0L);
+            context.ResponseData.Write((long)parcel.Length);
 
             return ResultCode.Success;
         }
@@ -182,10 +167,6 @@ namespace Ryujinx.HLE.HOS.Services.Vi.RootService
         // DestroyStrayLayer(u64)
         public ResultCode DestroyStrayLayer(ServiceCtx context)
         {
-            long layerId = context.RequestData.ReadInt64();
-
-            context.Device.System.SurfaceFlinger.CloseLayer(layerId);
-
             return ResultCode.Success;
         }
 
@@ -253,6 +234,36 @@ namespace Ryujinx.HLE.HOS.Services.Vi.RootService
             context.Response.HandleDesc = IpcHandleDesc.MakeCopy(handle);
 
             return ResultCode.Success;
+        }
+
+        private byte[] MakeIGraphicsBufferProducer(long basePtr)
+        {
+            long id        = 0x20;
+            long cookiePtr = 0L;
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                BinaryWriter writer = new BinaryWriter(ms);
+
+                // flat_binder_object (size is 0x28)
+                writer.Write(2); //Type (BINDER_TYPE_WEAK_BINDER)
+                writer.Write(0); //Flags
+                writer.Write((int)(id >> 0));
+                writer.Write((int)(id >> 32));
+                writer.Write((int)(cookiePtr >> 0));
+                writer.Write((int)(cookiePtr >> 32));
+                writer.Write((byte)'d');
+                writer.Write((byte)'i');
+                writer.Write((byte)'s');
+                writer.Write((byte)'p');
+                writer.Write((byte)'d');
+                writer.Write((byte)'r');
+                writer.Write((byte)'v');
+                writer.Write((byte)'\0');
+                writer.Write(0L); //Pad
+
+                return MakeParcel(ms.ToArray(), new byte[] { 0, 0, 0, 0 });
+            }
         }
 
         private string GetDisplayName(ServiceCtx context)

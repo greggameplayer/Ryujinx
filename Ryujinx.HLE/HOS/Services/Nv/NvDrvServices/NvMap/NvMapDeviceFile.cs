@@ -165,8 +165,12 @@ namespace Ryujinx.HLE.HOS.Services.Nv.NvDrvServices.NvMap
                 return NvInternalResult.InvalidInput;
             }
 
-            if (DecrementMapRefCount(Owner, arguments.Handle))
+            if (map.DecrementRefCount() <= 0)
             {
+                DeleteMapWithHandle(arguments.Handle);
+
+                Logger.PrintInfo(LogClass.ServiceNv, $"Deleted map {arguments.Handle}!");
+
                 arguments.Address = map.Address;
                 arguments.Flags   = 0;
             }
@@ -244,40 +248,14 @@ namespace Ryujinx.HLE.HOS.Services.Nv.NvDrvServices.NvMap
             return dict.Add(map);
         }
 
-        private static bool DeleteMapWithHandle(KProcess process, int handle)
+        private bool DeleteMapWithHandle(int handle)
         {
-            if (_maps.TryGetValue(process, out IdDictionary dict))
+            if (_maps.TryGetValue(Owner, out IdDictionary dict))
             {
                 return dict.Delete(handle) != null;
             }
 
             return false;
-        }
-
-        public static void IncrementMapRefCount(KProcess process, int handle, bool allowHandleZero = false)
-        {
-            GetMapFromHandle(process, handle, allowHandleZero)?.IncrementRefCount();
-        }
-
-        public static bool DecrementMapRefCount(KProcess process, int handle)
-        {
-            NvMapHandle map = GetMapFromHandle(process, handle, false);
-
-            if (map == null)
-                return false;
-
-            if (map.DecrementRefCount() <= 0)
-            {
-                DeleteMapWithHandle(process, handle);
-
-                Logger.PrintInfo(LogClass.ServiceNv, $"Deleted map {handle}!");
-
-                return true;
-            }
-            else
-            {
-                return false;
-            }
         }
 
         public static NvMapHandle GetMapFromHandle(KProcess process, int handle, bool allowHandleZero = false)
