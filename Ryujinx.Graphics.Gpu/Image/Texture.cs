@@ -321,23 +321,28 @@ namespace Ryujinx.Graphics.Gpu.Image
             {
                 Span<byte> gpuData = GetTextureDataFromGpu();
 
+                ulong endAddress = Address + Size;
+
                 for (int i = 0; i < modifiedRanges.Length; i++)
                 {
-                    (ulong address, ulong size) = modifiedRanges[i];
+                    (ulong modifiedAddress, ulong modifiedSize) = modifiedRanges[i];
 
-                    if (address < Address)
+                    ulong endModifiedAddress = modifiedAddress + modifiedSize;
+
+                    if (modifiedAddress < Address)
                     {
-                        size -= (Address - address);
-                        address = Address;
+                        modifiedAddress = Address;
                     }
 
-                    if (size > Size)
+                    if (endModifiedAddress > endAddress)
                     {
-                        size = Size;
+                        endModifiedAddress = endAddress;
                     }
 
-                    int offset = (int)(address - Address);
-                    int length = (int)size;
+                    modifiedSize = endModifiedAddress - modifiedAddress;
+
+                    int offset = (int)(modifiedAddress - Address);
+                    int length = (int)modifiedSize;
 
                     data.Slice(offset, length).CopyTo(gpuData.Slice(offset, length));
                 }
