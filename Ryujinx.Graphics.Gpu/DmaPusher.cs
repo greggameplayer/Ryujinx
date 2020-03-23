@@ -15,7 +15,7 @@ namespace Ryujinx.Graphics.Gpu
         private enum CommandBufferType
         {
             Prefetch,
-            NoPrefetch
+            NoPrefetch,
         }
 
         private struct CommandBuffer
@@ -26,9 +26,9 @@ namespace Ryujinx.Graphics.Gpu
             public CommandBufferType Type;
 
             /// <summary>
-            /// Prefetched data.
+            /// Fetched data.
             /// </summary>
-            public int[] WordsPrefetched;
+            public int[] Words;
 
             /// <summary>
             /// The GPFIFO entry address. (used in NoPrefetch mode)
@@ -41,6 +41,17 @@ namespace Ryujinx.Graphics.Gpu
             public uint EntryCount;
 
             /// <summary>
+            /// Fetch the command buffer.
+            /// </summary>
+            public void Fetch(GpuContext context)
+            {
+                if (Words == null)
+                {
+                    Words = MemoryMarshal.Cast<byte, int>(context.MemoryAccessor.GetSpan(EntryAddress, EntryCount * 4)).ToArray();
+                }
+            }
+
+            /// <summary>
             /// Read inside the command buffer.
             /// </summary>
             /// <param name="context">The GPU context</param>
@@ -48,12 +59,7 @@ namespace Ryujinx.Graphics.Gpu
             /// <returns>The value read</returns>
             public int ReadAt(GpuContext context, int index)
             {
-                if (Type == CommandBufferType.Prefetch)
-                {
-                    return WordsPrefetched[index];
-                }
-
-                return context.MemoryAccessor.ReadInt32(EntryAddress + (ulong)index * 4);
+                return Words[index];
             }
         }
 
@@ -94,8 +100,6 @@ namespace Ryujinx.Graphics.Gpu
 
             _ibEnable = true;
 
-            _currentCommandBuffer = new CommandBuffer();
-
             _commandBufferQueue = new ConcurrentQueue<CommandBuffer>();
 
             _event = new AutoResetEvent(false);
@@ -121,32 +125,20 @@ namespace Ryujinx.Graphics.Gpu
             _commandBufferQueue.Enqueue(new CommandBuffer
             {
                 Type            = CommandBufferType.Prefetch,
-                WordsPrefetched = commandBuffer,
+                Words = commandBuffer,
                 EntryAddress    = ulong.MaxValue,
                 EntryCount      = (uint)commandBuffer.Length
             });
         }
 
         /// <summary>
-        /// Pushes GPFIFO entries.
+        /// Create a CommandBufer from a GPFIFO entry.
         /// </summary>
-        /// <param name="entries">GPFIFO entries</param>
-        public void PushEntries(ReadOnlySpan<ulong> entries)
+        /// <param name="entry">The GPFIFO entry</param>
+        /// <returns></returns>
+        private CommandBuffer CreateCommandBuffer(ulong entry)
         {
-            // TODO: implemnet "prefetch barrier".
-            foreach (ulong entry in entries)
-            {
-                Push(entry);
-            }
-        }
-
-        /// <summary>
-        /// Pushes a GPFIFO entry.
-        /// </summary>
-        /// <param name="entry">GPFIFO entry</param>
-        private void Push(ulong entry)
-        {
-            ulong length      = (entry >> 42) & 0x1fffff;
+            ulong length = (entry >> 42) & 0x1fffff;
             ulong startAddres = entry & 0xfffffffffc;
 
             bool noPrefetch = (entry & (1UL << 63)) != 0;
@@ -158,20 +150,39 @@ namespace Ryujinx.Graphics.Gpu
                 type = CommandBufferType.NoPrefetch;
             }
 
-            int[] wordsPrefetched = null;
-
-            if (type == CommandBufferType.Prefetch)
-            {
-                wordsPrefetched = MemoryMarshal.Cast<byte, int>(_context.MemoryAccessor.GetSpan(startAddres, length * 4)).ToArray();
-            }
-
-            _commandBufferQueue.Enqueue(new CommandBuffer
+            return new CommandBuffer
             {
                 Type            = type,
-                WordsPrefetched = wordsPrefetched,
+                Words           = null,
                 EntryAddress    = startAddres,
                 EntryCount      = (uint)length
-            });
+            };
+        }
+
+        /// <summary>
+        /// Pushes GPFIFO entries.
+        /// </summary>
+        /// <param name="entries">GPFIFO entries</param>
+        public void PushEntries(ReadOnlySpan<ulong> entries)
+        {
+            bool beforeBarrier = true;
+
+            foreach (ulong entry in entries)
+            {
+                CommandBuffer commandBuffer = CreateCommandBuffer(entry);
+
+                if (beforeBarrier && commandBuffer.Type == CommandBufferType.Prefetch)
+                {
+                    commandBuffer.Fetch(_context);
+                }
+
+                if (commandBuffer.Type == CommandBufferType.NoPrefetch)
+                {
+                    beforeBarrier = false;
+                }
+
+                _commandBufferQueue.Enqueue(commandBuffer);
+            }
         }
 
         /// <summary>
@@ -275,6 +286,8 @@ namespace Ryujinx.Graphics.Gpu
             {
                 _currentCommandBuffer = entry;
                 _wordsPosition        = 0;
+
+                _currentCommandBuffer.Fetch(_context);
             }
             else
             {
