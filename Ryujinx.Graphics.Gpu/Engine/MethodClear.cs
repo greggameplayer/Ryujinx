@@ -13,6 +13,11 @@ namespace Ryujinx.Graphics.Gpu.Engine
         /// <param name="argument">Method call argument</param>
         private void Clear(GpuState state, int argument)
         {
+            if (!GetRenderEnable(state))
+            {
+                return;
+            }
+
             UpdateRenderTargetState(state, useControl: false);
 
             TextureManager.CommitGraphicsBindings();
