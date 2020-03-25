@@ -24,6 +24,11 @@ namespace Ryujinx.Configuration
         public int Version { get; set; }
 
         /// <summary>
+        /// Max Anisotropy. Values range from 0 - 16. Set to -1 to let the game decide.
+        /// </summary>
+        public float MaxAnisotropy { get; set; }
+
+        /// <summary>
         /// Dumps shaders in this local directory
         /// </summary>
         public string GraphicsShadersDumpPath { get; set; }
