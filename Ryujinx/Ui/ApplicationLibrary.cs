@@ -6,6 +6,7 @@ using LibHac.Fs.Shim;
 using LibHac.FsSystem;
 using LibHac.FsSystem.NcaUtils;
 using LibHac.Ncm;
+using LibHac.Ns;
 using LibHac.Spl;
 using Ryujinx.Common.Logging;
 using Ryujinx.Configuration.System;
@@ -40,6 +41,53 @@ namespace Ryujinx.Ui
         private static Language          _desiredTitleLanguage;
         private static bool              _loadingError;
 
+        public static IEnumerable<string> GetFilesInDirectory(string directory)
+        {
+            Stack<string> stack = new Stack<string>();
+            stack.Push(directory);
+            while (stack.Count > 0)
+            {
+                string dir = stack.Pop();
+                string[] content = { };
+
+                try
+                {
+                    content = Directory.GetFiles(dir, "*");
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    Logger.PrintWarning(LogClass.Application, $"Failed to get access to directory: \"{dir}\"");
+                }
+
+                if (content.Length > 0)
+                {
+                    foreach (string file in content)
+                        yield return file;
+                }
+
+                try
+                {
+                    content = Directory.GetDirectories(dir);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    Logger.PrintWarning(LogClass.Application, $"Failed to get access to directory: \"{dir}\"");
+                }
+
+                if (content.Length > 0)
+                {
+                    foreach (string subdir in content)
+                        stack.Push(subdir);
+                }
+            }
+        }
+
+        public static void ReadControlData(IFileSystem controlFs, Span<byte> outProperty)
+        {
+            controlFs.OpenFile(out IFile controlFile, "/control.nacp".ToU8Span(), OpenMode.Read).ThrowIfFailure();
+            controlFile.Read(out long _, 0, outProperty, ReadOption.None).ThrowIfFailure();
+        }
+
         public static void LoadApplications(List<string> appDirs, VirtualFileSystem virtualFileSystem, Language desiredTitleLanguage)
         {
             int numApplicationsFound  = 0;
@@ -53,6 +101,7 @@ namespace Ryujinx.Ui
             List<string> applications = new List<string>();
             foreach (string appDir in appDirs)
             {
+                
                 if (!Directory.Exists(appDir))
                 {
                     Logger.PrintWarning(LogClass.Application, $"The \"game_dirs\" section in \"Config.json\" contains an invalid directory: \"{appDir}\"");
@@ -60,10 +109,10 @@ namespace Ryujinx.Ui
                     continue;
                 }
 
-                foreach (string app in Directory.GetFiles(appDir, "*.*", SearchOption.AllDirectories))
+                foreach (string app in GetFilesInDirectory(appDir))
                 {
                     if ((Path.GetExtension(app).ToLower() == ".nsp") ||
-                        (Path.GetExtension(app).ToLower() == ".pfs0")||
+                        (Path.GetExtension(app).ToLower() == ".pfs0") ||
                         (Path.GetExtension(app).ToLower() == ".xci") ||
                         (Path.GetExtension(app).ToLower() == ".nca") ||
                         (Path.GetExtension(app).ToLower() == ".nro") ||
@@ -85,6 +134,7 @@ namespace Ryujinx.Ui
                 string version         = "0";
                 string saveDataPath    = null;
                 byte[] applicationIcon = null;
+                BlitStruct<ApplicationControlProperty> controlHolder = new BlitStruct<ApplicationControlProperty>(1);
 
                 try
                 {
@@ -161,6 +211,8 @@ namespace Ryujinx.Ui
                                 {
                                     // Store the ControlFS in variable called controlFs
                                     GetControlFsAndTitleId(pfs, out IFileSystem controlFs, out titleId);
+
+                                    ReadControlData(controlFs, controlHolder.ByteSpan);
 
                                     // Creates NACP class from the NACP file
                                     controlFs.OpenFile(out IFile controlNacpFile, "/control.nacp".ToU8Span(), OpenMode.Read).ThrowIfFailure();
@@ -371,7 +423,8 @@ namespace Ryujinx.Ui
                     FileExtension = Path.GetExtension(applicationPath).ToUpper().Remove(0 ,1),
                     FileSize      = (fileSize < 1) ? (fileSize * 1024).ToString("0.##") + "MB" : fileSize.ToString("0.##") + "GB",
                     Path          = applicationPath,
-                    SaveDataPath  = saveDataPath
+                    SaveDataPath  = saveDataPath,
+                    ControlHolder = controlHolder
                 };
 
                 numApplicationsLoaded++;
