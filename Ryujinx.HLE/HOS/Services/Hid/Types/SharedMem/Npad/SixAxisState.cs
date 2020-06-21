@@ -9,6 +9,6 @@ namespace Ryujinx.HLE.HOS.Services.Hid
         public HidVector Gyroscope;
         HidVector unknownSensor;
         public fixed float Orientation[9];
-        ulong _unknown2;
+        public  ulong _unknown2;
     }
 }
