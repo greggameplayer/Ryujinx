@@ -3,6 +3,7 @@ using Ryujinx.Common.Logging;
 using Ryujinx.Cpu;
 using Ryujinx.HLE.HOS.Kernel.Threading;
 using Ryujinx.HLE.HOS.Services.Audio.AudioOutManager;
+using System;
 using System.Text;
 
 namespace Ryujinx.HLE.HOS.Services.Audio
@@ -86,6 +87,26 @@ namespace Ryujinx.HLE.HOS.Services.Audio
             return ResultCode.Success;
         }
 
+        private static int SelectChannelCount(IAalOutput aalOut, int targetChannelCount)
+        {
+            if (aalOut.SupportsChannelCount(targetChannelCount))
+            {
+                return targetChannelCount;
+            }
+
+            switch (targetChannelCount)
+            {
+                case 6:
+                    return SelectChannelCount(aalOut, 2);
+                case 2:
+                    return SelectChannelCount(aalOut, 1);
+                case 1:
+                    throw new InvalidOperationException($"No valid channel configuration found!");
+                default:
+                    throw new InvalidOperationException($"Invalid targetChannelCount {targetChannelCount}");
+            }
+        }
+
         private ResultCode OpenAudioOutImpl(ServiceCtx context, long sendPosition, long sendSize, long receivePosition, long receiveSize)
         {
             string deviceName = MemoryHelper.ReadAsciiString(
@@ -146,6 +167,8 @@ namespace Ryujinx.HLE.HOS.Services.Audio
             };
 
             IAalOutput audioOut = context.Device.AudioOut;
+
+            channels = SelectChannelCount(audioOut, channels);
 
             int track = audioOut.OpenTrack(sampleRate, channels, callback);
 

@@ -104,6 +104,18 @@ namespace Ryujinx.Audio
             _context.Dispose();
         }
 
+        public bool SupportsChannelCount(int channels)
+        {
+            if (channels == 6)
+            {
+                // NOTE: OpenAL doesn't give us a way to know if the 5.1 setup is supported by hardware or actually emulated.
+                // TODO: find a way to determine hardware support.
+                // return AL.GetEnumValue("AL_FORMAT_51CHN16") != 0;
+            }
+
+            return channels == 1 || channels == 2;
+        }
+
         /// <summary>
         /// Creates a new audio track with the specified parameters
         /// </summary>

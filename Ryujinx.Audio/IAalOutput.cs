@@ -4,6 +4,8 @@ namespace Ryujinx.Audio
 {
     public interface IAalOutput : IDisposable
     {
+        bool SupportsChannelCount(int channels);
+
         int OpenTrack(int sampleRate, int channels, ReleaseCallback callback);
 
         void CloseTrack(int trackId);

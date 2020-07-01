@@ -30,6 +30,11 @@ namespace Ryujinx.Audio
 
         public PlaybackState GetState(int trackId) => PlaybackState.Stopped;
 
+        public bool SupportsChannelCount(int channels)
+        {
+            return true;
+        }
+
         public int OpenTrack(int sampleRate, int channels, ReleaseCallback callback)
         {
             if (!_trackIds.TryDequeue(out int trackId))

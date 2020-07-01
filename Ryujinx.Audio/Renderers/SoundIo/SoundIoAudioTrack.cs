@@ -100,6 +100,11 @@ namespace Ryujinx.Audio.SoundIo
                 throw new InvalidOperationException($"This sound device does not support SoundIOFormat.{Enum.GetName(typeof(SoundIOFormat), format)}");
             }
 
+            if (!AudioDevice.SupportsChannelCount(channelCount))
+            {
+                throw new InvalidOperationException($"This sound device does not support channel count {channelCount}");
+            }
+
             AudioStream = AudioDevice.CreateOutStream();
 
             AudioStream.Name       = $"SwitchAudioTrack_{TrackID}";

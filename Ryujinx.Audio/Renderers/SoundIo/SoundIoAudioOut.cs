@@ -1,6 +1,5 @@
 ﻿using Ryujinx.Audio.SoundIo;
 using SoundIOSharp;
-using System;
 using System.Collections.Generic;
 
 namespace Ryujinx.Audio
@@ -63,6 +62,11 @@ namespace Ryujinx.Audio
 
             _audioDevice = FindNonRawDefaultAudioDevice(_audioContext, true);
             _trackPool   = new SoundIoAudioTrackPool(_audioContext, _audioDevice, MaximumTracks);
+        }
+
+        public bool SupportsChannelCount(int channels)
+        {
+            return _audioDevice.SupportsChannelCount(channels);
         }
 
         /// <summary>
