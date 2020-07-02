@@ -6,7 +6,32 @@ namespace Ryujinx.Audio
     {
         bool SupportsChannelCount(int channels);
 
-        int OpenTrack(int sampleRate, int channels, ReleaseCallback callback);
+        private int SelectHardwareChannelCount(int targetChannelCount)
+        {
+            if (SupportsChannelCount(targetChannelCount))
+            {
+                return targetChannelCount;
+            }
+
+            switch (targetChannelCount)
+            {
+                case 6:
+                    return SelectHardwareChannelCount(2);
+                case 2:
+                    return SelectHardwareChannelCount(1);
+                case 1:
+                    throw new InvalidOperationException($"No valid channel configuration found!");
+                default:
+                    throw new InvalidOperationException($"Invalid targetChannelCount {targetChannelCount}");
+            }
+        }
+
+        int OpenTrack(int sampleRate, int channels, ReleaseCallback callback)
+        {
+            return OpenHardwareTrack(sampleRate, SelectHardwareChannelCount(channels), channels, callback);
+        }
+
+        int OpenHardwareTrack(int sampleRate, int hardwareChannels, int virtualChannels, ReleaseCallback callback);
 
         void CloseTrack(int trackId);
 
@@ -14,7 +39,7 @@ namespace Ryujinx.Audio
 
         long[] GetReleasedBuffers(int trackId, int maxCount);
 
-        void AppendBuffer<T>(int trackId, long bufferTag, T[] buffer)  where T : struct;
+        void AppendBuffer(int trackId, long bufferTag, ReadOnlySpan<short> buffer);
 
         void Start(int trackId);
 

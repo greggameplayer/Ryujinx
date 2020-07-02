@@ -35,7 +35,7 @@ namespace Ryujinx.Audio
             return true;
         }
 
-        public int OpenTrack(int sampleRate, int channels, ReleaseCallback callback)
+        public int OpenHardwareTrack(int sampleRate, int hardwareChannels, int virtualChannels, ReleaseCallback callback)
         {
             if (!_trackIds.TryDequeue(out int trackId))
             {
@@ -72,11 +72,11 @@ namespace Ryujinx.Audio
             return bufferTags.ToArray();
         }
 
-        public void AppendBuffer<T>(int trackID, long bufferTag, T[] buffer) where T : struct
+        public void AppendBuffer(int trackId, long bufferTag, ReadOnlySpan<short> buffer)
         {
             _buffers.Enqueue(bufferTag);
 
-            if (_releaseCallbacks.TryGetValue(trackID, out var callback))
+            if (_releaseCallbacks.TryGetValue(trackId, out var callback))
             {
                 callback?.Invoke();
             }

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Channels;
 
 namespace Ryujinx.Audio
 {
@@ -106,13 +107,8 @@ namespace Ryujinx.Audio
 
         public bool SupportsChannelCount(int channels)
         {
-            if (channels == 6)
-            {
-                // NOTE: OpenAL doesn't give us a way to know if the 5.1 setup is supported by hardware or actually emulated.
-                // TODO: find a way to determine hardware support.
-                // return AL.GetEnumValue("AL_FORMAT_51CHN16") != 0;
-            }
-
+            // NOTE: OpenAL doesn't give us a way to know if the 5.1 setup is supported by hardware or actually emulated.
+            // TODO: find a way to determine hardware support.
             return channels == 1 || channels == 2;
         }
 
@@ -120,11 +116,13 @@ namespace Ryujinx.Audio
         /// Creates a new audio track with the specified parameters
         /// </summary>
         /// <param name="sampleRate">The requested sample rate</param>
-        /// <param name="channels">The requested channels</param>
+        /// <param name="hardwareChannels">The requested hardware channels</param>
+        /// <param name="virtualChannels">The requested virtual channels</param>
         /// <param name="callback">A <see cref="ReleaseCallback" /> that represents the delegate to invoke when a buffer has been released by the audio track</param>
-        public int OpenTrack(int sampleRate, int channels, ReleaseCallback callback)
+        /// <returns>The created track's Track ID</returns>
+        public int OpenHardwareTrack(int sampleRate, int hardwareChannels, int virtualChannels, ReleaseCallback callback)
         {
-            OpenALAudioTrack track = new OpenALAudioTrack(sampleRate, GetALFormat(channels), callback);
+            OpenALAudioTrack track = new OpenALAudioTrack(sampleRate, GetALFormat(hardwareChannels), hardwareChannels, virtualChannels, callback);
 
             for (int id = 0; id < MaxTracks; id++)
             {
@@ -204,11 +202,10 @@ namespace Ryujinx.Audio
         /// <summary>
         /// Appends an audio buffer to the specified track
         /// </summary>
-        /// <typeparam name="T">The sample type of the buffer</typeparam>
         /// <param name="trackId">The track to append the buffer to</param>
         /// <param name="bufferTag">The internal tag of the buffer</param>
         /// <param name="buffer">The buffer to append to the track</param>
-        public void AppendBuffer<T>(int trackId, long bufferTag, T[] buffer) where T : struct
+        public void AppendBuffer(int trackId, long bufferTag, ReadOnlySpan<short> buffer)
         {
             if (_tracks.TryGetValue(trackId, out OpenALAudioTrack track))
             {
@@ -216,9 +213,24 @@ namespace Ryujinx.Audio
                 {
                     int bufferId = track.AppendBuffer(bufferTag);
 
-                    int size = buffer.Length * Marshal.SizeOf<T>();
+                    // Do we need to downmix?
+                    if (track.HardwareChannels != track.VirtualChannels)
+                    {
+                        if (track.VirtualChannels == 6 && track.HardwareChannels == 2)
+                        {
+                            short[] downmixedBuffer = DspUtils.DownMixSurroundToStereo(buffer);
 
-                    AL.BufferData(bufferId, track.Format, buffer, size, track.SampleRate);
+                            AL.BufferData(bufferId, track.Format, downmixedBuffer, downmixedBuffer.Length * Marshal.SizeOf<ushort>(), track.SampleRate);
+                        }
+                        else
+                        {
+                            throw new NotImplementedException($"Downmixing from {track.VirtualChannels} to {track.HardwareChannels} not implemented!");
+                        }
+                    }
+                    else
+                    {
+                        AL.BufferData(bufferId, track.Format, buffer.ToArray(), buffer.Length * Marshal.SizeOf<ushort>(), track.SampleRate);
+                    }
 
                     AL.SourceQueueBuffer(track.SourceId, bufferId);
 
