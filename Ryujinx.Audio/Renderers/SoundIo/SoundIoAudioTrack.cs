@@ -521,22 +521,33 @@ namespace Ryujinx.Audio.SoundIo
                     throw new NotImplementedException("Non PCM16 downmixing isn't supported!");
                 }
 
+                short[] downmixedBuffer;
+
                 ReadOnlySpan<short> bufferPCM16 = MemoryMarshal.Cast<T, short>(buffer);
 
-                if (_virtualChannels == 6 && _hardwareChannels == 2)
+                if (_virtualChannels == 6)
                 {
-                    short[] downmixedBuffer = DspUtils.DownMixSurroundToStereo(bufferPCM16);
+                    downmixedBuffer = Downmixing.DownMixSurroundToStereo(bufferPCM16);
 
-                    // Copy the memory to our ring buffer
-                    m_Buffer.Write<short>(downmixedBuffer, 0, downmixedBuffer.Length);
-
-                    // Keep track of "buffered" buffers
-                    m_ReservedBuffers.Enqueue(new SoundIoBuffer(bufferTag, sampleSize * downmixedBuffer.Length));
+                    if (_hardwareChannels == 1)
+                    {
+                        downmixedBuffer = Downmixing.DownMixStereoToMono(downmixedBuffer);
+                    }
+                }
+                else if (_virtualChannels == 2)
+                {
+                    downmixedBuffer = Downmixing.DownMixStereoToMono(bufferPCM16);
                 }
                 else
                 {
                     throw new NotImplementedException($"Downmixing from {_virtualChannels} to {_hardwareChannels} not implemented!");
                 }
+
+                // Copy the memory to our ring buffer
+                m_Buffer.Write<short>(downmixedBuffer, 0, downmixedBuffer.Length);
+
+                // Keep track of "buffered" buffers
+                m_ReservedBuffers.Enqueue(new SoundIoBuffer(bufferTag, sampleSize * downmixedBuffer.Length));
             }
             else
             {

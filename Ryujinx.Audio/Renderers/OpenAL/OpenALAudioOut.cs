@@ -4,7 +4,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Channels;
 
 namespace Ryujinx.Audio
 {
@@ -216,16 +215,28 @@ namespace Ryujinx.Audio
                     // Do we need to downmix?
                     if (track.HardwareChannels != track.VirtualChannels)
                     {
-                        if (track.VirtualChannels == 6 && track.HardwareChannels == 2)
-                        {
-                            short[] downmixedBuffer = DspUtils.DownMixSurroundToStereo(buffer);
+                        short[] downmixedBuffer;
 
-                            AL.BufferData(bufferId, track.Format, downmixedBuffer, downmixedBuffer.Length * Marshal.SizeOf<ushort>(), track.SampleRate);
+                        if (track.VirtualChannels == 6)
+                        {
+                            downmixedBuffer = Downmixing.DownMixSurroundToStereo(buffer);
+
+                            if (track.HardwareChannels == 1)
+                            {
+                                downmixedBuffer = Downmixing.DownMixStereoToMono(downmixedBuffer);
+                            }
+
+                        }
+                        else if (track.VirtualChannels == 2)
+                        {
+                            downmixedBuffer = Downmixing.DownMixStereoToMono(buffer);
                         }
                         else
                         {
                             throw new NotImplementedException($"Downmixing from {track.VirtualChannels} to {track.HardwareChannels} not implemented!");
                         }
+
+                        AL.BufferData(bufferId, track.Format, downmixedBuffer, downmixedBuffer.Length * Marshal.SizeOf<ushort>(), track.SampleRate);
                     }
                     else
                     {
