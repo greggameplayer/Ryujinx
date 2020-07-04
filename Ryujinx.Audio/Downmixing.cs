@@ -223,12 +223,12 @@ namespace Ryujinx.Audio
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static short[] DownMixStereoToMono(ReadOnlySpan<int> coefficients, ReadOnlySpan<short> data)
         {
-            const int SurroundChannelCount = 2;
-            const int StereoChannelCount = 1;
+            const int StereoChannelCount = 2;
+            const int MonoChannelCount = 1;
 
-            int samplePerChannelCount = data.Length / SurroundChannelCount;
+            int samplePerChannelCount = data.Length / StereoChannelCount;
 
-            short[] downmixedBuffer = new short[samplePerChannelCount * StereoChannelCount];
+            short[] downmixedBuffer = new short[samplePerChannelCount * MonoChannelCount];
 
             int i = 0;
 

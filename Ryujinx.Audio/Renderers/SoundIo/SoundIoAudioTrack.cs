@@ -511,7 +511,7 @@ namespace Ryujinx.Audio.SoundIo
                 return;
             }
 
-            int sampleSize = sizeof(short);
+            int sampleSize = Unsafe.SizeOf<T>();
             int targetSize = sampleSize * buffer.Length;
 
             // Do we need to downmix?
