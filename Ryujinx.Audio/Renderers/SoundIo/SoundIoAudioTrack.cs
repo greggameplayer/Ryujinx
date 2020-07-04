@@ -512,6 +512,7 @@ namespace Ryujinx.Audio.SoundIo
             }
 
             int sampleSize = Unsafe.SizeOf<T>();
+            int targetSize = sampleSize * buffer.Length;
 
             // Do we need to downmix?
             if (_hardwareChannels != _virtualChannels)
@@ -543,19 +544,21 @@ namespace Ryujinx.Audio.SoundIo
                     throw new NotImplementedException($"Downmixing from {_virtualChannels} to {_hardwareChannels} not implemented!");
                 }
 
+                targetSize = sampleSize * downmixedBuffer.Length;
+
                 // Copy the memory to our ring buffer
-                m_Buffer.Write<short>(downmixedBuffer, 0, downmixedBuffer.Length);
+                m_Buffer.Write<short>(downmixedBuffer, 0, targetSize);
 
                 // Keep track of "buffered" buffers
-                m_ReservedBuffers.Enqueue(new SoundIoBuffer(bufferTag, sampleSize * downmixedBuffer.Length));
+                m_ReservedBuffers.Enqueue(new SoundIoBuffer(bufferTag, targetSize));
             }
             else
             {
                 // Copy the memory to our ring buffer
-                m_Buffer.Write(buffer, 0, buffer.Length);
+                m_Buffer.Write(buffer, 0, targetSize);
 
                 // Keep track of "buffered" buffers
-                m_ReservedBuffers.Enqueue(new SoundIoBuffer(bufferTag, sampleSize * buffer.Length));
+                m_ReservedBuffers.Enqueue(new SoundIoBuffer(bufferTag, targetSize));
             }
         }
 
