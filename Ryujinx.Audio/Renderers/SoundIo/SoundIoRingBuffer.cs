@@ -112,7 +112,7 @@ namespace Ryujinx.Audio.SoundIo
         /// <param name="buffer">A span containing the data to write</param>
         /// <param name="index">The zero-based byte offset in <paramref name="buffer" /> from which to begin copying bytes to the ring buffer</param>
         /// <param name="count">The number of element to write</param>
-        public void Write<T>(ReadOnlySpan<T> buffer, int index, int count) where T: struct
+        public void Write<T>(ReadOnlySpan<T> buffer, int index, int count) where T: unmanaged
         {
             if (count == 0)
             {

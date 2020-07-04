@@ -202,8 +202,7 @@ namespace Ryujinx.Audio
                             result = Sse.Add(result, Sse.Multiply(center, centerCoefficient));
                             result = Sse.Add(result, Sse.Multiply(front, frontCoefficient));
 
-                            Sse2.Store(ptr + i * 2,
-                                       Sse2.PackSignedSaturate(Sse2.ConvertToVector128Int32(result), Vector128<int>.Zero));
+                            Sse2.Store(ptr + i * 2, Sse2.PackSignedSaturate(Sse2.ConvertToVector128Int32(result), Vector128<int>.Zero));
                         }
                     }
                 }

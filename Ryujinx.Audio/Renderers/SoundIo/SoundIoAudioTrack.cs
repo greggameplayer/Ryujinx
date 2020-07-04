@@ -504,22 +504,22 @@ namespace Ryujinx.Audio.SoundIo
         /// <typeparam name="T">The audio sample type</typeparam>
         /// <param name="bufferTag">The unqiue tag of the buffer being appended</param>
         /// <param name="buffer">The buffer to append</param>
-        public void AppendBuffer<T>(long bufferTag, ReadOnlySpan<T> buffer) where T: struct
+        public void AppendBuffer<T>(long bufferTag, ReadOnlySpan<T> buffer) where T: unmanaged
         {
             if (AudioStream == null)
             {
                 return;
             }
 
-            int sampleSize = Unsafe.SizeOf<T>();
+            int sampleSize = sizeof(short);
             int targetSize = sampleSize * buffer.Length;
 
             // Do we need to downmix?
             if (_hardwareChannels != _virtualChannels)
             {
-                if (sampleSize != Unsafe.SizeOf<short>())
+                if (sampleSize != sizeof(short))
                 {
-                    throw new NotImplementedException("Non PCM16 downmixing isn't supported!");
+                    throw new NotImplementedException("Downmixing formats other than PCM16 is not supported!");
                 }
 
                 short[] downmixedBuffer;

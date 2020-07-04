@@ -225,7 +225,6 @@ namespace Ryujinx.Audio
                             {
                                 downmixedBuffer = Downmixing.DownMixStereoToMono(downmixedBuffer);
                             }
-
                         }
                         else if (track.VirtualChannels == 2)
                         {

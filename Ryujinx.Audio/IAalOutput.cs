@@ -20,9 +20,9 @@ namespace Ryujinx.Audio
                 case 2:
                     return SelectHardwareChannelCount(1);
                 case 1:
-                    throw new InvalidOperationException($"No valid channel configuration found!");
+                    throw new ArgumentException($"No valid channel configuration found!");
                 default:
-                    throw new InvalidOperationException($"Invalid targetChannelCount {targetChannelCount}");
+                    throw new ArgumentException($"Invalid targetChannelCount {targetChannelCount}");
             }
         }
 
