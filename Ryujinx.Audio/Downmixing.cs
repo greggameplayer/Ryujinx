@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics;
-using System.Runtime.Intrinsics.X86;
 
 namespace Ryujinx.Audio
 {
@@ -72,19 +70,6 @@ namespace Ryujinx.Audio
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static float[] ConvertCoefficients(ReadOnlySpan<int> coefficients)
-        {
-            float[] coeffs = new float[coefficients.Length];
-
-            for (int i = 0; i < coefficients.Length; i++)
-            {
-                coeffs[i] = (float)coefficients[i] / (float)RawQ15One;
-            }
-
-            return coeffs;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static short[] DownMixSurroundToStereo(ReadOnlySpan<int> coefficients, ReadOnlySpan<short> data)
         {
             const int SurroundChannelCount = 6;
@@ -94,122 +79,10 @@ namespace Ryujinx.Audio
 
             short[] downmixedBuffer = new short[samplePerChannelCount * StereoChannelCount];
 
-            int i = 0;
-
             ReadOnlySpan<Channel51FormatPCM16> channels = GetSurroundBuffer(data);
 
-            if (Fma.IsSupported)
-            {
-                float[] coeffs = ConvertCoefficients(coefficients);
-
-                Vector256<float> backCoefficient = Vector256.Create(coeffs[3]);
-                Vector256<float> lowFrequencyCoefficient = Vector256.Create(coeffs[2]);
-                Vector256<float> centerCoefficient = Vector256.Create(coeffs[1]);
-                Vector256<float> frontCoefficient = Vector256.Create(coeffs[0]);
-
-                unsafe
-                {
-                    fixed (short* ptr = downmixedBuffer)
-                    {
-                        for (; i < samplePerChannelCount / 4; i += 4)
-                        {
-                            ReadOnlySpan<Channel51FormatPCM16> currentChannels = channels.Slice(i, 4);
-
-                            Vector256<float> center = Avx.ConvertToVector256Single(
-                                Vector256.Create(currentChannels[0].FrontCenter, currentChannels[0].FrontCenter,
-                                                 currentChannels[1].FrontCenter, currentChannels[1].FrontCenter,
-                                                 currentChannels[2].FrontCenter, currentChannels[2].FrontCenter,
-                                                 currentChannels[3].FrontCenter, currentChannels[3].FrontCenter));
-
-                            Vector256<float> lowFrequency = Avx.ConvertToVector256Single(
-                                Vector256.Create(currentChannels[0].LowFrequency, currentChannels[0].LowFrequency,
-                                                 currentChannels[1].LowFrequency, currentChannels[1].LowFrequency,
-                                                 currentChannels[2].LowFrequency, currentChannels[2].LowFrequency,
-                                                 currentChannels[3].LowFrequency, currentChannels[3].LowFrequency));
-
-                            Vector256<float> front = Avx.ConvertToVector256Single(
-                                Vector256.Create(currentChannels[0].FrontLeft, currentChannels[0].FrontRight,
-                                                 currentChannels[1].FrontLeft, currentChannels[1].FrontRight,
-                                                 currentChannels[2].FrontLeft, currentChannels[2].FrontRight,
-                                                 currentChannels[3].FrontLeft, currentChannels[3].FrontRight));
-
-                            Vector256<float> back = Avx.ConvertToVector256Single(
-                                Vector256.Create(currentChannels[0].BackLeft, currentChannels[0].BackRight,
-                                                 currentChannels[1].BackLeft, currentChannels[1].BackRight,
-                                                 currentChannels[2].BackLeft, currentChannels[2].BackRight,
-                                                 currentChannels[3].BackLeft, currentChannels[3].BackRight));
-
-                            Vector256<float> resultFloat = Vector256.Create(0.5f);
-
-                            resultFloat = Fma.MultiplyAdd(back, backCoefficient, resultFloat);
-                            resultFloat = Fma.MultiplyAdd(lowFrequency, lowFrequencyCoefficient, resultFloat);
-                            resultFloat = Fma.MultiplyAdd(center, centerCoefficient, resultFloat);
-                            resultFloat = Fma.MultiplyAdd(front, frontCoefficient, resultFloat);
-
-                            Vector256<int> result = Avx.ConvertToVector256Int32(resultFloat);
-
-                            Sse2.Store(ptr + i * 2, Sse2.PackSignedSaturate(result.GetLower(), result.GetUpper()));
-                        }
-                    }
-                }
-            }
-            else if (Sse2.IsSupported)
-            {
-                float[] coeffs = ConvertCoefficients(coefficients);
-
-                Vector128<float> backCoefficient = Vector128.Create(coeffs[3]);
-                Vector128<float> lowFrequencyCoefficient = Vector128.Create(coeffs[2]);
-                Vector128<float> centerCoefficient = Vector128.Create(coeffs[1]);
-                Vector128<float> frontCoefficient = Vector128.Create(coeffs[0]);
-
-                unsafe
-                {
-                    fixed (short* ptr = downmixedBuffer)
-                    {
-                        // NOTE: divide by 4 as we write 4 samples in total (the 2 last are zeroed)
-                        for (; i < samplePerChannelCount / 4; i += 2)
-                        {
-                            ReadOnlySpan<Channel51FormatPCM16> currentChannels = channels.Slice(i, 2);
-
-                            Vector128<float> center = Sse2.ConvertToVector128Single(
-                                Vector128.Create(currentChannels[0].FrontCenter,
-                                                 currentChannels[0].FrontCenter,
-                                                 currentChannels[1].FrontCenter,
-                                                 currentChannels[1].FrontCenter));
-
-                            Vector128<float> lowFrequency = Sse2.ConvertToVector128Single(
-                                Vector128.Create(currentChannels[0].LowFrequency,
-                                                 currentChannels[0].LowFrequency,
-                                                 currentChannels[1].LowFrequency,
-                                                 currentChannels[1].LowFrequency));
-
-                            Vector128<float> front = Sse2.ConvertToVector128Single(
-                                Vector128.Create(currentChannels[0].FrontLeft,
-                                                 currentChannels[0].FrontRight,
-                                                 currentChannels[1].FrontLeft,
-                                                 currentChannels[1].FrontRight));
-
-                            Vector128<float> back = Sse2.ConvertToVector128Single(
-                                Vector128.Create(currentChannels[0].BackLeft,
-                                                 currentChannels[0].BackRight,
-                                                 currentChannels[1].BackLeft,
-                                                 currentChannels[1].BackRight));
-
-                            Vector128<float> result = Vector128.Create(0.5f);
-
-                            result = Sse.Add(result, Sse.Multiply(back, backCoefficient));
-                            result = Sse.Add(result, Sse.Multiply(lowFrequency, lowFrequencyCoefficient));
-                            result = Sse.Add(result, Sse.Multiply(center, centerCoefficient));
-                            result = Sse.Add(result, Sse.Multiply(front, frontCoefficient));
-
-                            Sse2.Store(ptr + i * 2, Sse2.PackSignedSaturate(Sse2.ConvertToVector128Int32(result), Vector128<int>.Zero));
-                        }
-                    }
-                }
-            }
-
             // The rest or fallback
-            for (; i < samplePerChannelCount; i++)
+            for (int i = 0; i < samplePerChannelCount; i++)
             {
                 Channel51FormatPCM16 channel = channels[i];
 
@@ -230,60 +103,10 @@ namespace Ryujinx.Audio
 
             short[] downmixedBuffer = new short[samplePerChannelCount * MonoChannelCount];
 
-            int i = 0;
-
             ReadOnlySpan<ChannelStereoFormatPCM16> channels = GetStereoBuffer(data);
 
-            if (Sse2.IsSupported)
-            {
-                float[] coeffs = ConvertCoefficients(coefficients);
-
-                Vector128<float> leftCoefficient = Vector128.Create(coeffs[0]);
-                Vector128<float> rightCoefficient = Vector128.Create(coeffs[1]);
-
-                unsafe
-                {
-                    fixed (short* ptr = downmixedBuffer)
-                    {
-                        for (; i < samplePerChannelCount / 8; i += 8)
-                        {
-                            ReadOnlySpan<ChannelStereoFormatPCM16> currentChannels = channels.Slice(i, 8);
-
-                            Vector128<float> left0 = Sse2.ConvertToVector128Single(
-                                Vector128.Create(currentChannels[0].Left,
-                                                 currentChannels[1].Left,
-                                                 currentChannels[2].Left,
-                                                 currentChannels[3].Left));
-
-                            Vector128<float> right0 = Sse2.ConvertToVector128Single(
-                                Vector128.Create(currentChannels[0].Right,
-                                                 currentChannels[1].Right,
-                                                 currentChannels[2].Right,
-                                                 currentChannels[3].Right));
-
-                            Vector128<float> left1 = Sse2.ConvertToVector128Single(
-                                Vector128.Create(currentChannels[4].Left,
-                                                 currentChannels[5].Left,
-                                                 currentChannels[6].Left,
-                                                 currentChannels[7].Left));
-
-                            Vector128<float> right1 = Sse2.ConvertToVector128Single(
-                                Vector128.Create(currentChannels[4].Right,
-                                                 currentChannels[5].Right,
-                                                 currentChannels[6].Right,
-                                                 currentChannels[7].Right));
-
-                            Vector128<float> result0 = Sse.Add(Sse.Multiply(left0, leftCoefficient), Sse.Multiply(right0, rightCoefficient));
-                            Vector128<float> result1 = Sse.Add(Sse.Multiply(left1, leftCoefficient), Sse.Multiply(right1, rightCoefficient));
-
-                            Sse2.Store(ptr + i, Sse2.PackSignedSaturate(Sse2.ConvertToVector128Int32(result0), Sse2.ConvertToVector128Int32(result1)));
-                        }
-                    }
-                }
-            }
-
             // The rest or fallback
-            for (; i < samplePerChannelCount; i++)
+            for (int i = 0; i < samplePerChannelCount; i++)
             {
                 ChannelStereoFormatPCM16 channel = channels[i];
 
