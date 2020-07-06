@@ -1,5 +1,6 @@
 ﻿using Force.Crc32;
 using Ryujinx.Common.Configuration.Hid;
+using Ryujinx.Common.Logging;
 using Ryujinx.Configuration;
 using System;
 using System.Collections.Generic;
@@ -88,13 +89,15 @@ namespace Ryujinx.Common.DSU
             try
             {
                 lock (_clients)
-                {
-                    UdpClient client = new UdpClient(host, port);
-                    
+                {                    
                     if (!ConfigurationState.Instance.Hid.EnableDsuClient)
                     {
                         return;
                     }
+
+                    UdpClient client = new UdpClient(host, port);
+
+                    Logger.PrintInfo(Logging.LogClass.Hid, $"Connecting to motion source at {endPoint}");
 
                     _clients.Add(player, client);
                     _hosts.Add(player, endPoint);
@@ -109,7 +112,7 @@ namespace Ryujinx.Common.DSU
             }
             catch(SocketException ex)
             {
-                return;
+                Logger.PrintWarning(Logging.LogClass.Hid, $"Unable to connect to motion source at {endPoint}. Error code {ex.ErrorCode}");
             }
         }
 
@@ -136,7 +139,7 @@ namespace Ryujinx.Common.DSU
                 }
                 catch (SocketException ex)
                 {
-
+                    Logger.PrintWarning(Logging.LogClass.Hid, $"Unable to send data request to motion source at {_client.Client.RemoteEndPoint}. Error code {ex.ErrorCode}");
                 }
             }
         }
@@ -155,7 +158,7 @@ namespace Ryujinx.Common.DSU
                     }
                     catch (SocketException ex)
                     {
-
+                        Logger.PrintWarning(Logging.LogClass.Hid, $"Unable to receive data from motion source at {endPoint}. Error code {ex.ErrorCode}");
                     }
                 }
             }
