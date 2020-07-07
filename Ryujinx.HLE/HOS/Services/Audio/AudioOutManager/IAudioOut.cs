@@ -4,6 +4,7 @@ using Ryujinx.HLE.HOS.Ipc;
 using Ryujinx.HLE.HOS.Kernel.Common;
 using Ryujinx.HLE.HOS.Kernel.Threading;
 using System;
+using System.Runtime.InteropServices;
 
 namespace Ryujinx.HLE.HOS.Services.Audio.AudioOutManager
 {
@@ -106,11 +107,9 @@ namespace Ryujinx.HLE.HOS.Services.Audio.AudioOutManager
                 context.Memory,
                 position);
 
-            byte[] buffer = new byte[data.SampleBufferSize];
+            ReadOnlySpan<byte> buffer = context.Memory.GetSpan((ulong)data.SampleBufferPtr, (int)data.SampleBufferSize);
 
-            context.Memory.Read((ulong)data.SampleBufferPtr, buffer);
-
-            _audioOut.AppendBuffer(_track, tag, buffer);
+            _audioOut.AppendBuffer(_track, tag, MemoryMarshal.Cast<byte, short>(buffer));
 
             return ResultCode.Success;
         }

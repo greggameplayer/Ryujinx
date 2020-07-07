@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Ryujinx.Audio.SoundIo
 {
@@ -107,15 +109,17 @@ namespace Ryujinx.Audio.SoundIo
         /// <summary>
         /// Writes a sequence of bytes to the ring buffer
         /// </summary>
-        /// <param name="buffer">A byte array containing the data to write</param>
+        /// <param name="buffer">A span containing the data to write</param>
         /// <param name="index">The zero-based byte offset in <paramref name="buffer" /> from which to begin copying bytes to the ring buffer</param>
-        /// <param name="count">The number of bytes to write</param>
-        public void Write<T>(T[] buffer, int index, int count)
+        /// <param name="count">The number of element to write</param>
+        public void Write<T>(ReadOnlySpan<T> buffer, int index, int count) where T: unmanaged
         {
             if (count == 0)
             {
                 return;
             }
+
+            ReadOnlySpan<byte> rawBuffer = MemoryMarshal.Cast<T, byte>(buffer);
 
             lock (this)
             {
@@ -130,17 +134,19 @@ namespace Ryujinx.Audio.SoundIo
 
                     if (tailLength >= count)
                     {
-                        Buffer.BlockCopy(buffer, index, m_Buffer, m_TailOffset, count);
+                        rawBuffer.Slice(index, count).CopyTo(m_Buffer.AsSpan().Slice(m_TailOffset, count));
                     }
                     else
                     {
-                        Buffer.BlockCopy(buffer, index, m_Buffer, m_TailOffset, tailLength);
-                        Buffer.BlockCopy(buffer, index + tailLength, m_Buffer, 0, count - tailLength);
+                        int restLength = count - tailLength;
+
+                        rawBuffer.Slice(index, tailLength).CopyTo(m_Buffer.AsSpan().Slice(m_TailOffset, tailLength));
+                        rawBuffer.Slice(index + tailLength, restLength).CopyTo(m_Buffer.AsSpan().Slice(0, restLength));
                     }
                 }
                 else
                 {
-                    Buffer.BlockCopy(buffer, index, m_Buffer, m_TailOffset, count);
+                    rawBuffer.Slice(index, count).CopyTo(m_Buffer.AsSpan().Slice(m_TailOffset, count));
                 }
 
                 m_Size += count;
