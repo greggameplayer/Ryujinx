@@ -23,7 +23,7 @@ namespace Ryujinx.Common.Configuration.Hid
         {
             InputConfig config = ConfigurationState.Instance.Hid.InputConfig.Value.Find(x => x.PlayerIndex == player);
 
-            if(config != null && config.EnableMotion)
+            if (config != null && config.EnableMotion)
             {
                 string host = config.UseAltServer ? config.DsuServerHost : ConfigurationState.Instance.Hid.DsuServerHost;
                 int    port = config.UseAltServer ? config.DsuServerPort : ConfigurationState.Instance.Hid.DsuServerPort;
@@ -31,7 +31,7 @@ namespace Ryujinx.Common.Configuration.Hid
                 _motionSource.RegisterClient((int)player, host, port);
                 _motionSource.RequestData((int)player, config.Slot);
 
-                if(config.ControllerType == ControllerType.JoyconPair && !config.MirrorInput)
+                if (config.ControllerType == ControllerType.JoyconPair && !config.MirrorInput)
                 {
                     _motionSource.RequestData((int)player, config.AltSlot);
                 }
@@ -78,6 +78,7 @@ namespace Ryujinx.Common.Configuration.Hid
             value.X = (int)(value.X * 1000) * 0.001f;
             value.Y = (int)(value.Y * 1000) * 0.001f;
             value.Z = (int)(value.Z * 1000) * 0.001f;
+
             return value;
         }
     }

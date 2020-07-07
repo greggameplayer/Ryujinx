@@ -29,11 +29,9 @@ namespace Ryujinx.Common.DSU
             ConfigurationState.Instance.Hid.DsuServerPort.Event   += DSU_Port_Updated;
             ConfigurationState.Instance.Hid.EnableDsuClient.Event += DSU_Toggled;
 
-            _hosts = new Dictionary<int, IPEndPoint>();
-
+            _hosts      = new Dictionary<int, IPEndPoint>();
             _motionData = new Dictionary<int, Dictionary<int, MotionInput>>();
-
-            _clients = new Dictionary<int, UdpClient>();
+            _clients    = new Dictionary<int, UdpClient>();
 
             CloseClients();
         }
@@ -65,7 +63,9 @@ namespace Ryujinx.Common.DSU
                     {
                         client.Value?.Dispose();
                     }
+#pragma warning disable CS0168
                     catch (SocketException ex)
+#pragma warning restore CS0168
                     {
 
                     }
@@ -89,7 +89,7 @@ namespace Ryujinx.Common.DSU
             try
             {
                 lock (_clients)
-                {                    
+                {
                     if (!ConfigurationState.Instance.Hid.EnableDsuClient)
                     {
                         return;
@@ -110,7 +110,7 @@ namespace Ryujinx.Common.DSU
                     });
                 }
             }
-            catch(SocketException ex)
+            catch (SocketException ex)
             {
                 Logger.PrintWarning(Logging.LogClass.Hid, $"Unable to connect to motion source at {endPoint}. Error code {ex.ErrorCode}");
             }
@@ -172,16 +172,20 @@ namespace Ryujinx.Common.DSU
             {
                 byte[] data = Receive(clientId);
 
-                if(data.Length == 0)
+                if (data.Length == 0)
                 {
                     continue;
                 }
 
+#pragma warning disable CS4014
                 HandleResponse(data, clientId);
+#pragma warning restore CS4014
             }
         }
 
+#pragma warning disable CS1998
         public unsafe async Task HandleResponse(byte[] data, int clientId)
+#pragma warning restore CS1998
         {
             MessageType type = (MessageType)BitConverter.ToUInt32(data.AsSpan().Slice(16, 4));
 
@@ -220,21 +224,20 @@ namespace Ryujinx.Common.DSU
                             {
                                 int slot = inputData.Shared.Slot;
 
-                                int cid = clientId;
-                                if (_motionData.ContainsKey(cid))
+                                if (_motionData.ContainsKey(clientId))
                                 {
-                                    if (_motionData[cid].ContainsKey(slot))
+                                    if (_motionData[clientId].ContainsKey(slot))
                                     {
-                                        _motionData[cid][slot] = motionData;
+                                        _motionData[clientId][slot] = motionData;
                                     }
                                     else
                                     {
-                                        _motionData[cid].Add(slot, motionData);
+                                        _motionData[clientId].Add(slot, motionData);
                                     }
                                 }
                                 else
                                 {
-                                    _motionData.Add(cid, new Dictionary<int, MotionInput>() { { slot, motionData } });
+                                    _motionData.Add(clientId, new Dictionary<int, MotionInput>() { { slot, motionData } });
                                 }
                             }
                             break;
@@ -275,9 +278,7 @@ namespace Ryujinx.Common.DSU
                     writer.Seek(6, SeekOrigin.Begin);
                     writer.Write(header.Length);
 
-                    var crc = Crc32Algorithm.Compute(mem.ToArray());
-
-                    header.CRC32 = crc;
+                    header.CRC32 = Crc32Algorithm.Compute(mem.ToArray());
 
                     writer.Seek(8, SeekOrigin.Begin);
                     writer.Write(header.CRC32);
@@ -320,9 +321,7 @@ namespace Ryujinx.Common.DSU
                     writer.Seek(6, SeekOrigin.Begin);
                     writer.Write(header.Length);
 
-                    var crc = Crc32Algorithm.Compute(mem.ToArray());
-
-                    header.CRC32 = crc;
+                    header.CRC32 = Crc32Algorithm.Compute(mem.ToArray());
 
                     writer.Seek(8, SeekOrigin.Begin);
                     writer.Write(header.CRC32);

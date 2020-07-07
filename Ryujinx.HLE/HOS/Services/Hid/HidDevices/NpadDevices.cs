@@ -282,7 +282,7 @@ namespace Ryujinx.HLE.HOS.Services.Hid
                     Z = states[i].Gyroscope.Z
                 };
 
-                if(SetSixAxisState(states[i].PlayerId, accel, gyro, states[i].Orientation))
+                if (SetSixAxisState(states[i].PlayerId, accel, gyro, states[i].Orientation))
                 {
                     SetSixAxisState(states[i + 1].PlayerId, accel, gyro, states[i + 1].Orientation, true);
                     i++;
@@ -348,7 +348,7 @@ namespace Ryujinx.HLE.HOS.Services.Hid
             currentEntry.Accelerometer = accel;
             currentEntry.Gyroscope     = gyro;
 
-            for(int i = 0; i < 9; i++)
+            for (int i = 0; i < 9; i++)
             {
                 currentEntry.Orientation[i] = orientation[i];
             }
