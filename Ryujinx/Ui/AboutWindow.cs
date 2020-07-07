@@ -1,7 +1,5 @@
 ﻿using Gtk;
-using Newtonsoft.Json.Linq;
 using System;
-using System.Configuration;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -23,8 +21,6 @@ namespace Ryujinx.Ui
 #pragma warning restore CS0649
 #pragma warning restore IDE0044
 
-        public string localAppPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ryujinx");
-
         public AboutWindow() : this(new Builder("Ryujinx.Ui.AboutWindow.glade")) { }
 
         private AboutWindow(Builder builder) : base(builder.GetObject("_aboutWin").Handle)
@@ -38,23 +34,7 @@ namespace Ryujinx.Ui
             _discordLogo.Pixbuf = new Gdk.Pixbuf(Assembly.GetExecutingAssembly(), "Ryujinx.Ui.assets.DiscordLogo.png", 30 , 30 );
             _twitterLogo.Pixbuf = new Gdk.Pixbuf(Assembly.GetExecutingAssembly(), "Ryujinx.Ui.assets.TwitterLogo.png", 30 , 30 );
 
-            if (!Directory.Exists(localAppPath))
-            {
-                Directory.CreateDirectory(localAppPath);
-            }
-
-            if (ConfigurationManager.AppSettings["Version"] != "__ver__")
-            {
-                string currentVersion = ConfigurationManager.AppSettings["Version"];
-                string currentVersionBranch = ConfigurationManager.AppSettings["Branch"];
-                string currentVersionPr = ConfigurationManager.AppSettings["PrID"];
-
-                _versionText.Text = "Version - " + currentVersion + Environment.NewLine + "Branch - " + currentVersionBranch + Environment.NewLine + "PR ID - #" + currentVersionPr;
-            }
-            else
-            {
-                _versionText.Text = "Unknown Version";
-            }
+            _versionText.Text = Program.Version;
         }
 
         private static void OpenUrl(string url)

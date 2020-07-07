@@ -10,12 +10,6 @@ environment:
       config_name: '-'
 build_script:
 - ps: >-
-    (Get-Content -Path $env:APPVEYOR_BUILD_FOLDER\Ryujinx\App.config).replace('__ver__', $env:APPVEYOR_BUILD_VERSION) | Set-Content -Path $env:APPVEYOR_BUILD_FOLDER\Ryujinx\App.config
-
-    (Get-Content -Path $env:APPVEYOR_BUILD_FOLDER\Ryujinx\App.config).replace('__branch__', $env:APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH) | Set-Content -Path $env:APPVEYOR_BUILD_FOLDER\Ryujinx\App.config
-
-    (Get-Content -Path $env:APPVEYOR_BUILD_FOLDER\Ryujinx\App.config).replace('__prid__', $env:APPVEYOR_PULL_REQUEST_NUMBER) | Set-Content -Path $env:APPVEYOR_BUILD_FOLDER\Ryujinx\App.config
-
     dotnet --version
 
     dotnet publish -c $env:config -r win-x64 /p:Version=$env:APPVEYOR_BUILD_VERSION

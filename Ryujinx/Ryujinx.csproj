@@ -40,7 +40,6 @@
     <None Remove="Ui\assets\NROIcon.png" />
     <None Remove="Ui\assets\NSOIcon.png" />
     <None Remove="Ui\assets\NSPIcon.png" />
-    <None Remove="Ui\assets\Update.png" />
     <None Remove="Ui\assets\XCIIcon.png" />
     <None Remove="Ui\assets\DiscordLogo.png" />
     <None Remove="Ui\assets\GitHubLogo.png" />
@@ -65,7 +64,6 @@
     <EmbeddedResource Include="Ui\assets\NROIcon.png" />
     <EmbeddedResource Include="Ui\assets\NSOIcon.png" />
     <EmbeddedResource Include="Ui\assets\NSPIcon.png" />
-    <EmbeddedResource Include="Ui\assets\Update.png" />
     <EmbeddedResource Include="Ui\assets\XCIIcon.png" />
     <EmbeddedResource Include="Ui\assets\DiscordLogo.png" />
     <EmbeddedResource Include="Ui\assets\GitHubLogo.png" />
@@ -85,8 +83,7 @@
     <PackageReference Include="GLWidget" Version="1.0.2" />
     <PackageReference Include="GtkSharp" Version="3.22.25.56" />
     <PackageReference Include="GtkSharp.Dependencies" Version="1.1.0" Condition="'$(RuntimeIdentifier)' != 'linux-x64' AND '$(RuntimeIdentifier)' != 'osx-x64'" />
-    <PackageReference Include="OpenTK.NetStandard" Version="1.0.4" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.7.0" />
+    <PackageReference Include="OpenTK.NetStandard" Version="1.0.5.12" />
   </ItemGroup>
 
   <ItemGroup>
@@ -97,7 +94,6 @@
     <ProjectReference Include="..\ARMeilleure\ARMeilleure.csproj" />
     <ProjectReference Include="..\Ryujinx.Graphics.OpenGL\Ryujinx.Graphics.OpenGL.csproj" />
     <ProjectReference Include="..\Ryujinx.Graphics.Gpu\Ryujinx.Graphics.Gpu.csproj" />
-    <ProjectReference Include="..\Ryujinx.Updater\Ryujinx.Updater.csproj" />
   </ItemGroup>
 
   <ItemGroup>

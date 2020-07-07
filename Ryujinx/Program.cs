@@ -5,10 +5,8 @@ using Ryujinx.Common.SystemInfo;
 using Ryujinx.Configuration;
 using Ryujinx.Debugger.Profiler;
 using Ryujinx.Ui;
-using Ryujinx.Updater.Parser;
 using OpenTK;
 using System;
-using System.Configuration;
 using System.IO;
 using System.Reflection;
 
@@ -97,24 +95,11 @@ namespace Ryujinx
             }
 
             MainWindow mainWindow = new MainWindow();
-
-            if (ConfigurationManager.AppSettings["Version"] != "__ver__")
-            {
-                mainWindow.Title = "Ryujinx " + ConfigurationManager.AppSettings["Version"];
-            }
-
             mainWindow.Show();
 
-            if (args.Length >= 1)
+            if (args.Length == 1)
             {
-                if (args[0].ToUpper() == "/U")
-                {
-                    UpdateParser.BeginParse();
-                }
-                else
-                {
-                    mainWindow.LoadApplication(args[0]);
-                }
+                mainWindow.LoadApplication(args[0]);
             }
 
             Application.Run();
