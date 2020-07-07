@@ -43,7 +43,7 @@ namespace Ryujinx.Common.Configuration.Hid
         public int DsuServerPort { get; set; }
 
         /// <summary>
-        /// Enable Motion Controls
+        /// nable Motion Controls
         /// </summary>
         public bool EnableMotion { get; set; }
 

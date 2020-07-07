@@ -6,18 +6,16 @@ using System.Text;
 namespace Ryujinx.Common.DSU
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    struct ControllerDataRequest
+    unsafe struct ControllerDataRequest
     {
         public MessageType Type;
         public SubscriberType SubscriberType;
         public byte Slot;
-
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]
-        public byte[] MacAddress;
+        public fixed byte Mac[6];
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct ControllerDataResponse
+    public unsafe struct ControllerDataResponse
     {
         public SharedResponse Shared;
         public byte Connected;
@@ -29,12 +27,8 @@ namespace Ryujinx.Common.DSU
         public ushort RightStickXY;
         public uint DPadAnalog;
         public ulong MainButtonsAnalog;
-
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]
-        public byte[] Touch1;
-
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]
-        public byte[] Touch2;
+        public fixed byte Touch1[6];
+        public fixed byte Touch2[6];
         public ulong MotionTimestamp;
         public float AccelerometerX;
         public float AccelerometerY;

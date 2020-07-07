@@ -3,16 +3,14 @@
 namespace Ryujinx.Common.DSU
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct SharedResponse
+    public unsafe struct SharedResponse
     {
         public MessageType Type;
         public byte Slot;
         public SlotState State;
         public DeviceModelType ModelType;
         public ConnectionType ConnectionType;
-
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]
-        public byte[] MacAddress;
+        public fixed byte MacAddress[6];
         public BatteryStatus BatteryStatus;
     }
 
