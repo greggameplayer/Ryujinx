@@ -183,21 +183,6 @@ namespace Ryujinx.Configuration
         public KeyboardHotkeys Hotkeys { get; set; }
 
         /// <summary>
-        /// Host address of the DSU Server
-        /// </summary>
-        public string DsuServerHost { get; set; }
-
-        /// <summary>
-        /// Port of the DSU Server
-        /// </summary>
-        public int DsuServerPort { get; set; }
-
-        /// <summary>
-        /// Enables or disables motion controls
-        /// </summary>
-        public bool EnableMotionControls { get; set; }
-
-        /// <summary>
         /// Keyboard control bindings
         /// </summary>
         public List<KeyboardConfig> KeyboardConfig { get; set; }

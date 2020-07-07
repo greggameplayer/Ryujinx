@@ -255,29 +255,10 @@ namespace Ryujinx.Configuration
 
             public HidSection()
             {
-                EnableKeyboard  = new ReactiveObject<bool>();
-                Hotkeys         = new ReactiveObject<KeyboardHotkeys>();
-                InputConfig     = new ReactiveObject<List<InputConfig>>();
-                EnableDsuClient = new ReactiveObject<bool>();
-                DsuServerHost   = new ReactiveObject<string>();
-                DsuServerPort   = new ReactiveObject<int>();
+                EnableKeyboard = new ReactiveObject<bool>();
+                Hotkeys        = new ReactiveObject<KeyboardHotkeys>();
+                InputConfig    = new ReactiveObject<List<InputConfig>>();
             }
-
-            /// <summary>
-            /// DSU (Cemu Hook Motion Provider) Server Host address
-            /// </summary>
-            public ReactiveObject<string> DsuServerHost { get; private set; }
-
-
-            /// <summary>
-            /// DSU (Cemu Hook Motion Provider) Server Port
-            /// </summary>
-            public ReactiveObject<int> DsuServerPort { get; private set; }
-
-            /// <summary>
-            /// Enable DSU (Cemu Hook Motion Provider) client
-            /// </summary>
-            public ReactiveObject<bool> EnableDsuClient { get; private set; }
         }
 
         /// <summary>
@@ -411,9 +392,6 @@ namespace Ryujinx.Configuration
                 FsGlobalAccessLogMode     = System.FsGlobalAccessLogMode,
                 AudioBackend              = System.AudioBackend,
                 IgnoreMissingServices     = System.IgnoreMissingServices,
-                DsuServerHost             = Hid.DsuServerHost,
-                DsuServerPort             = Hid.DsuServerPort,
-                EnableMotionControls      = Hid.EnableDsuClient,
                 GuiColumns                = new GuiColumns
                 {
                     FavColumn        = Ui.GuiColumns.FavColumn,
@@ -488,13 +466,12 @@ namespace Ryujinx.Configuration
             Ui.EnableCustomTheme.Value             = false;
             Ui.CustomThemePath.Value               = "";
             Hid.EnableKeyboard.Value               = false;
+            
             Hid.Hotkeys.Value = new KeyboardHotkeys
             {
                 ToggleVsync = Key.Tab
             };
-            Hid.EnableDsuClient.Value              = false;
-            Hid.DsuServerHost.Value                = "127.0.0.1";
-            Hid.DsuServerPort.Value                = 26760;
+
             Hid.InputConfig.Value = new List<InputConfig>
             {
                 new KeyboardConfig
@@ -695,12 +672,6 @@ namespace Ryujinx.Configuration
             {
                 Common.Logging.Logger.PrintWarning(LogClass.Application, $"Outdated configuration version {configurationFileFormat.Version}, migrating to version 11.");
 
-                configurationFileFormat.EnableMotionControls = false;
-
-                configurationFileFormat.DsuServerHost = "127.0.0.1";
-
-                configurationFileFormat.DsuServerPort = 26760;
-
                 configurationFileFormat.ResScale = 1;
                 configurationFileFormat.ResScaleCustom = 1.0f;
 
@@ -755,9 +726,6 @@ namespace Ryujinx.Configuration
             Hid.EnableKeyboard.Value               = configurationFileFormat.EnableKeyboard;
             Hid.Hotkeys.Value                      = configurationFileFormat.Hotkeys;
             Hid.InputConfig.Value                  = inputConfig;
-            Hid.EnableDsuClient.Value              = configurationFileFormat.EnableMotionControls;
-            Hid.DsuServerHost.Value                = configurationFileFormat.DsuServerHost;
-            Hid.DsuServerPort.Value                = configurationFileFormat.DsuServerPort;
 
             if (configurationFileUpdated)
             {
