@@ -10,10 +10,12 @@ namespace Ryujinx.Common.DSU
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public unsafe struct ControllerInfoRequest
+    public struct ControllerInfoRequest
     {
         public MessageType Type;
         public int PortsCount;
-        public fixed byte PortIndices[4];
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public byte[] PortIndices;
     }
 }

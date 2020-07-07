@@ -268,7 +268,6 @@ namespace Ryujinx.Configuration
             /// </summary>
             public ReactiveObject<string> DsuServerHost { get; private set; }
 
-
             /// <summary>
             /// DSU (Cemu Hook Motion Provider) Server Port
             /// </summary>
@@ -703,6 +702,17 @@ namespace Ryujinx.Configuration
 
                 configurationFileFormat.ResScale = 1;
                 configurationFileFormat.ResScaleCustom = 1.0f;
+
+                configurationFileUpdated = true;
+            }
+
+            if (configurationFileFormat.Version < 12)
+            {
+                Common.Logging.Logger.PrintWarning(LogClass.Application, $"Outdated configuration version {configurationFileFormat.Version}, migrating to version 12.");
+
+                configurationFileFormat.EnableMotionControls = false;
+                configurationFileFormat.DsuServerHost = "127.0.0.1";
+                configurationFileFormat.DsuServerPort = 26760;
 
                 configurationFileUpdated = true;
             }
